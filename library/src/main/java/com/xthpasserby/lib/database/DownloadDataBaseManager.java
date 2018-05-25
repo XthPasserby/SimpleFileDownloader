@@ -49,11 +49,12 @@ public class DownloadDataBaseManager {
 
     public boolean addDownloadTask(DownloadTask task) {
         if (DownloadStatus.CANCEL == task.getDownloadStatus()) return false;
-        LogUtil.e("addDownloadTask id =" + task.getId() +  ", file_name = " + task.getFileName() + ", status = " + task.getDownloadStatus());
+        LogUtil.e("addDownloadTask id =" + task.getId() + ", file_name = " + task.getFileName() + ", status = " + task.getDownloadStatus());
         ContentValues values = obtainContentValues(task);
-        long line = 0;
+        long id = 0;
         synchronized (this) {
-            line =  dataBase.insert(TABLE_NAME, null, values);
+            id = dataBase.insert(TABLE_NAME, null, values);
+            if (id > 0) task.setId(id);
         }
         synchronized (contentValuesPool) {
             values.clear();
@@ -61,7 +62,7 @@ public class DownloadDataBaseManager {
                 contentValuesPool.add(values);
             }
         }
-        return line > 0;
+        return id > 0;
     }
 
     public boolean removeDownloadTask(DownloadTask task) {
@@ -76,7 +77,7 @@ public class DownloadDataBaseManager {
         if (!res) {
             for (int i = 0; i < 3; i++) {
                 synchronized (this) {
-                    delRes = dataBase.delete(TABLE_NAME, String.format("%1$s=%2$s", DownloadTask.ID, task.getId()), null);
+                    delRes = dataBase.delete(TABLE_NAME, DownloadTask.ID + "=" + task.getId(), null);
                 }
                 LogUtil.e("removeDownloadTask FOR i = " + i + ", id =" + task.getId() + ", file_name = " + task.getFileName() + ", status = " + task.getDownloadStatus() + ", delRes = " + delRes);
                 if (delRes > 0) {
@@ -124,16 +125,15 @@ public class DownloadDataBaseManager {
         Cursor cursor = dataBase.rawQuery("select * from " + TABLE_NAME, null);
         while (cursor.moveToNext()) {
             if (null == list) list = new ArrayList<>();
-            DownloadTask task = DownloadTaskFactory.buildTask();
-            task.setId(cursor.getInt(cursor.getColumnIndex(DownloadTask.ID)));
-            task.setDownloadUrl(cursor.getString(cursor.getColumnIndex(DownloadTask.DOWNLOAD_URL)));
-            task.setDownloadStatus(DownloadStatus.valueOf(cursor.getString(cursor.getColumnIndex(DownloadTask.DOWNLOAD_STATUS))));
-            task.setFilePath(cursor.getString(cursor.getColumnIndex(DownloadTask.FILE_PATH)));
-            task.setFileName(cursor.getString(cursor.getColumnIndex(DownloadTask.FILE_NAME)));
-            task.setFileSize(cursor.getString(cursor.getColumnIndex(DownloadTask.FILE_SIZE)));
-            task.setProgressCount(cursor.getLong(cursor.getColumnIndex(DownloadTask.PROGRESS_COUNT)));
-            task.setCurrentProgress(cursor.getLong(cursor.getColumnIndex(DownloadTask.CURRENT_PROGRESS)));
-            task.setPercentage(cursor.getInt(cursor.getColumnIndex(DownloadTask.PERCENTAGE)));
+            DownloadTask task = DownloadTaskFactory.buildTask(cursor.getInt(cursor.getColumnIndex(DownloadTask.ID)),
+                    cursor.getString(cursor.getColumnIndex(DownloadTask.DOWNLOAD_URL)),
+                    DownloadStatus.valueOf(cursor.getString(cursor.getColumnIndex(DownloadTask.DOWNLOAD_STATUS))),
+                    cursor.getString(cursor.getColumnIndex(DownloadTask.FILE_PATH)),
+                    cursor.getString(cursor.getColumnIndex(DownloadTask.FILE_NAME)),
+                    cursor.getString(cursor.getColumnIndex(DownloadTask.FILE_SIZE)),
+                    cursor.getLong(cursor.getColumnIndex(DownloadTask.PROGRESS_COUNT)),
+                    cursor.getLong(cursor.getColumnIndex(DownloadTask.CURRENT_PROGRESS)),
+                    cursor.getInt(cursor.getColumnIndex(DownloadTask.PERCENTAGE)));
             list.add(task);
         }
         cursor.close();

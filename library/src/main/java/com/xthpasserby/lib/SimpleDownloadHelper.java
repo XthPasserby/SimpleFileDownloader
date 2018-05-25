@@ -35,7 +35,6 @@ import okio.Okio;
 public class SimpleDownloadHelper {
     private static final int PERCENTAGE = 100;
     private static final int PERMILLAGE = 1000;
-    private static SimpleDownloadHelper instance = null;
     private static OkHttpClient mHttpClient = null;
     private static DownloadDataBaseManager dbManger;
     private static IDownloadListener mListener;
@@ -50,32 +49,15 @@ public class SimpleDownloadHelper {
     // 进度条更新模式
     private int progressType = PERCENTAGE;
 
-    private SimpleDownloadHelper(Context context) {
+    SimpleDownloadHelper(Context context) {
         mHttpClient = new OkHttpClient.Builder().readTimeout(30, TimeUnit.SECONDS).build();
         dbManger = new DownloadDataBaseManager(context.getApplicationContext());
     }
 
     /**
-     * 获取实例
-     *
-     * @return 返回SimpleDownloadHelper实例
-     */
-    public static SimpleDownloadHelper getInstance(Context context) {
-        if (null == instance) {
-            synchronized (SimpleDownloadHelper.class) {
-                if (null == instance) {
-                    instance = new SimpleDownloadHelper(context);
-                }
-            }
-        }
-
-        return instance;
-    }
-
-    /**
      * 开启Debug打印
      */
-    public static void enableDebug() {
+    static void enableDebug() {
         isDebug = true;
     }
 
@@ -88,7 +70,7 @@ public class SimpleDownloadHelper {
      * @return 可能为null
      */
     @SuppressWarnings("unchecked")
-    public List<DownloadTask> getAllDownloadTask() {
+    List<DownloadTask> getAllDownloadTask() {
         return dbManger.getAllDownloadTask();
     }
 
@@ -96,7 +78,7 @@ public class SimpleDownloadHelper {
      * 注册监听
      * @param listener 下载监听
      */
-    public void setDownloadListener(IDownloadListener listener) {
+    void setDownloadListener(IDownloadListener listener) {
         LogUtil.d("setDownloadListener called!");
         mListener = listener;
     }
@@ -105,7 +87,7 @@ public class SimpleDownloadHelper {
      * 开始下载 注意该方法中item需要配置的参数有：fileName、filePath、downloadUrl
      * @param task 下载内容
      */
-    public void downloadStart(@NonNull final DownloadTask task) {
+    void downloadStart(@NonNull final DownloadTask task) {
         if (DownloadStatus.DOWNLOADING == task.getDownloadStatus() && downloadTaskCallMap.get(task) != null) {
             return;
         }
@@ -123,7 +105,7 @@ public class SimpleDownloadHelper {
      * 恢复下载 注意该方法中task需要配置的参数有：progressCount、currentProgress、fileName、filePath、downloadUrl
      * @param task 下载内容
      */
-    public void downloadResume(@NonNull final DownloadTask task) {
+    void downloadResume(@NonNull final DownloadTask task) {
         if (DownloadStatus.DOWNLOADING == task.getDownloadStatus() && downloadTaskCallMap.get(task) != null) {
             return;
         }
@@ -143,7 +125,7 @@ public class SimpleDownloadHelper {
      * @param fileName 保存文件
      * @param isResume 是否为断点续传
      */
-    private void download(@NonNull DownloadTask task, @NonNull String fileName, boolean isResume) {
+    void download(@NonNull DownloadTask task, @NonNull String fileName, boolean isResume) {
         LogUtil.d(task.getDownloadUrl() + (isResume ? "---DOWNLOAD_RESUME" : "---DOWNLOAD_START"));
         task.setLastTime(System.currentTimeMillis());
         task.setDownloadStatus(isResume ? DownloadStatus.RESUME : DownloadStatus.START);
@@ -291,7 +273,7 @@ public class SimpleDownloadHelper {
      * 暂停下载
      * @param task
      */
-    public void downloadPause(@NonNull DownloadTask task) {
+    void downloadPause(@NonNull DownloadTask task) {
         LogUtil.d(task.getDownloadUrl() + "---DOWNLOAD_PAUSE");
         if (downloadTaskCallMap.containsKey(task)) {
             Call call = downloadTaskCallMap.get(task);
@@ -309,7 +291,7 @@ public class SimpleDownloadHelper {
      * @param task 下载内容
      * @param isDel 是否删除文件
      */
-    public void downloadCancel(@NonNull DownloadTask task, boolean isDel) {
+    void downloadCancel(@NonNull DownloadTask task, boolean isDel) {
         LogUtil.d(task.getDownloadUrl() + "---DOWNLOAD_CANCEL and isDel = " + isDel);
         if (downloadTaskCallMap.containsKey(task)) {
             Call call = downloadTaskCallMap.get(task);

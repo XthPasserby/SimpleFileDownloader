@@ -47,13 +47,30 @@ public class DownloadTask {
     protected long lastCount = 0;
     protected int speed = 0; // 单位KB/S，显示时可自行转换
 
-    DownloadTask() {
-    }
+    private SimpleDownloader simpleDownloader;
 
-    DownloadTask(String downloadUrl, String fileName, boolean isNeedSaveIntoDataBase) {
+    DownloadTask(SimpleDownloader simpleDownloader, String downloadUrl, String filePath, String fileName, boolean isNeedSaveIntoDataBase) {
+        this.simpleDownloader = simpleDownloader;
         this.downloadUrl = downloadUrl;
+        this.filePath = filePath;
         this.fileName = fileName;
         this.isNeedSaveIntoDataBase = isNeedSaveIntoDataBase;
+    }
+
+    public DownloadTask(long id, String downloadUrl, DownloadStatus downloadStatus, String filePath, String fileName, String fileSize, long progressCount, long currentProgress, int percentage) {
+        this.id = id;
+        this.downloadUrl = downloadUrl;
+        this.downloadStatus = downloadStatus;
+        this.filePath = filePath;
+        this.fileName = fileName;
+        this.fileSize = fileSize;
+        this.progressCount = progressCount;
+        this.currentProgress = currentProgress;
+        this.percentage = percentage;
+    }
+
+    void setSimpleDownloader(SimpleDownloader simpleDownloader) {
+        this.simpleDownloader = simpleDownloader;
     }
 
     public long getId() {
@@ -186,5 +203,36 @@ public class DownloadTask {
                 ", lastCount=" + lastCount +
                 ", speed=" + speed +
                 '}';
+    }
+
+    public void start() {
+        simpleDownloader.startTask(this);
+    }
+
+    public void pause() {
+        simpleDownloader.pauseTask(this);
+    }
+
+    public void resume() {
+        simpleDownloader.resumeTask(this);
+    }
+
+    public void cancel(boolean deleteFile) {
+        simpleDownloader.cancelTask(this, deleteFile);
+    }
+
+    public void recycle() {
+        id = 0;
+        downloadUrl = null;
+        filePath = null;
+        fileName = null;
+        fileSize = null;
+        downloadStatus = DownloadStatus.UN_START;
+        progressCount = 0;
+        currentProgress = 0;
+        percentage = 0;
+        isCancel = false;
+        isNeedSaveIntoDataBase = true;
+        simpleDownloader.recycleTask(this);
     }
 }

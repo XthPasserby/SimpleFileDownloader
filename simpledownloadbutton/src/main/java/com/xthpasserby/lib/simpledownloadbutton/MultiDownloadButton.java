@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.RectF;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -123,6 +124,7 @@ public class MultiDownloadButton extends BaseDownloadButton {
 
     @Override
     public void onProgress(DownloadTask task) {
+        if (null == mDataBean || !TextUtils.equals(task.getDownloadUrl(), mDataBean.getDownloadUrl())) return;
         setProgress(mDataBean.getPercentage());
     }
 
@@ -202,17 +204,6 @@ public class MultiDownloadButton extends BaseDownloadButton {
     }
 
     private int dp2px(final int dp) {
-        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, dp, getResources().getDisplayMetrics());
-    }
-
-    private String getDownloadSpeedString(Context mContext, int speed) {
-        String mSpeed;
-        if (speed > 1024) {
-            mSpeed = String.format(mContext.getString(R.string.download_speed_mb), ((float)speed / 1024));
-        } else {
-            mSpeed = String.format(mContext.getString(R.string.download_speed_kb), speed);
-        }
-
-        return mSpeed;
+        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());
     }
 }

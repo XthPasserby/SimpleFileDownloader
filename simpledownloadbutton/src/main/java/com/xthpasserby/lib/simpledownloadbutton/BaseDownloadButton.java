@@ -22,7 +22,6 @@ public abstract class BaseDownloadButton extends AppCompatTextView implements Vi
 
     private Context mContext;
     protected DownloadTask mDataBean;
-    private IOnDownloadButtonClickListener buttonClickListener;
 
     public BaseDownloadButton(Context context) {
         super(context);
@@ -51,29 +50,23 @@ public abstract class BaseDownloadButton extends AppCompatTextView implements Vi
         updateUI();
     }
 
-    public void setButtonClickListener(IOnDownloadButtonClickListener listener) {
-        buttonClickListener = listener;
-    }
-
-    public int getButtonStatus() {
-        return mStatus;
-    }
-
     @Override
     public void onClick(View v) {
-        if (null == buttonClickListener) return;
+        if (null == mDataBean) return;
         switch (mStatus) {
+            case BUTTON_STATUS_UNABLE:
+                break;
             case BUTTON_STATUS_INSTALL:
-                buttonClickListener.onClickAfterDownloadFinish(mDataBean);
                 break;
             case BUTTON_STATUS_PAUSE:
-                buttonClickListener.onClickToResumeDownload(mDataBean);
+                mDataBean.resume();
                 break;
             case BUTTON_STATUS_DOWNLOADING:
-                buttonClickListener.onClickToPauseDownload(mDataBean);
+                mDataBean.pause();
                 break;
+            case BUTTON_STATUS_NORMAL:
             default:
-                buttonClickListener.onClickToStartDownload(mDataBean);
+                mDataBean.start();
                 break;
         }
     }
@@ -109,6 +102,17 @@ public abstract class BaseDownloadButton extends AppCompatTextView implements Vi
         }
     }
 
+    protected String getDownloadSpeedString(Context mContext, int speed) {
+        String mSpeed;
+        if (speed > 1024) {
+            mSpeed = String.format(mContext.getString(R.string.download_speed_mb), ((float)speed / 1024));
+        } else {
+            mSpeed = String.format(mContext.getString(R.string.download_speed_kb), speed);
+        }
+
+        return mSpeed;
+    }
+
     @Override
     public void onStatusChange(DownloadTask task) {
         if (null == mDataBean || !TextUtils.equals(task.getDownloadUrl(), mDataBean.getDownloadUrl())) return;
@@ -120,16 +124,5 @@ public abstract class BaseDownloadButton extends AppCompatTextView implements Vi
     @Override
     public void onStorageOverFlow() {
 
-    }
-
-    public interface IOnDownloadButtonClickListener {
-
-        void onClickToStartDownload(DownloadTask task);
-
-        void onClickToPauseDownload(DownloadTask task);
-
-        void onClickToResumeDownload(DownloadTask task);
-
-        void onClickAfterDownloadFinish(DownloadTask task);
     }
 }
