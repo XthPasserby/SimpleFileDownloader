@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">SimpleDownloadButton</string>
+    <string name="download_speed_kb">%1$dKB/s</string>
+    <string name="download_speed_mb">%1$.1fMB/s</string>
+</resources>
