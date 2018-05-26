@@ -6,10 +6,10 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 
+import com.xthpasserby.lib.DownloadStatus;
 import com.xthpasserby.lib.DownloadTask;
-import com.xthpasserby.lib.IDownloadListener;
 
-public abstract class BaseDownloadButton extends AppCompatTextView implements View.OnClickListener, IDownloadListener {
+public abstract class BaseDownloadButton extends AppCompatTextView implements View.OnClickListener, DownloadTask.ITaskStatusListener {
     // 按钮各种状态
     protected static final int BUTTON_STATUS_UNABLE = -1;
     protected static final int BUTTON_STATUS_NORMAL = 0;
@@ -114,15 +114,8 @@ public abstract class BaseDownloadButton extends AppCompatTextView implements Vi
     }
 
     @Override
-    public void onStatusChange(DownloadTask task) {
-        if (null == mDataBean || !TextUtils.equals(task.getDownloadUrl(), mDataBean.getDownloadUrl())) return;
-
+    public void onStatusChange(DownloadStatus status) {
         changeButtonStatus();
         updateUI();
-    }
-
-    @Override
-    public void onStorageOverFlow() {
-
     }
 }

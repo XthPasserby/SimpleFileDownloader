@@ -5,11 +5,8 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.drawable.ClipDrawable;
 import android.graphics.drawable.Drawable;
-import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.Gravity;
-
-import com.xthpasserby.lib.DownloadTask;
 
 
 /**
@@ -89,10 +86,9 @@ public class ProgressDownloadButton extends BaseDownloadButton {
     }
 
     @Override
-    public void onProgress(DownloadTask task) {
-        if (null == mDataBean || !TextUtils.equals(task.getDownloadUrl(), mDataBean.getDownloadUrl())) return;
-        setText(String.format("%1$s%%", mDataBean.getPercentage()));
-        setProgress(mDataBean.getPercentage());
+    public void onProgress(int percentage) {
+        setText(String.format("%1$s%%", percentage));
+        setProgress(percentage);
     }
 
     private void setProgressIsShow(boolean isShow) {

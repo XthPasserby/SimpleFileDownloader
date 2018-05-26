@@ -8,12 +8,9 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.RectF;
-import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
-
-import com.xthpasserby.lib.DownloadTask;
 
 
 public class MultiDownloadButton extends BaseDownloadButton {
@@ -123,9 +120,8 @@ public class MultiDownloadButton extends BaseDownloadButton {
     }
 
     @Override
-    public void onProgress(DownloadTask task) {
-        if (null == mDataBean || !TextUtils.equals(task.getDownloadUrl(), mDataBean.getDownloadUrl())) return;
-        setProgress(mDataBean.getPercentage());
+    public void onProgress(int percentage) {
+        setProgress(percentage);
     }
 
     private void setProgress(int progress) {

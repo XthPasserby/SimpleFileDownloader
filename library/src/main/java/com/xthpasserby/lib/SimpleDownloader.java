@@ -21,6 +21,8 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
     private static final int MESSAGE_ON_STATE_CHANGE = 0xBA0;
     private static final int MESSAGE_ON_PROGRESS = 0xBA1;
     private static final int MESSAGE_ON_OVER_FLOW = 0xBA2;
+    private static final int MESSAGE_ON_TASK_STATUS_CHANGE = 0xBA3;
+    private static final int MESSAGE_ON_TASK_PROGRESS = 0xBA4;
     private static final int MAX_POOL_SIZE = 100;
     private static final List<DownloadTask> taskPool = new ArrayList<>();
     private static SimpleDownloader sInstance;
@@ -34,6 +36,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
     private String taskFilePath;
     private String taskFileName;
     private boolean taskNeedResume = true;
+    private DownloadTask.ITaskStatusListener statusListener;
 
     public static SimpleDownloader init(Context context) {
         if (null == sInstance) {
@@ -143,6 +146,15 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
         return this;
     }
 
+    public SimpleDownloader setTaskStatusChangeLisener(DownloadTask.ITaskStatusListener listener) {
+        if (null == listener) {
+            LogUtil.e("listener is null!");
+            return null;
+        }
+        statusListener = listener;
+        return this;
+    }
+
     public DownloadTask buildTask() {
         if (TextUtils.isEmpty(taskFilePath)) {
             taskFilePath = DEFAULT_DOWNLOAD_FILE_PATH;
@@ -162,6 +174,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
                 task = taskPool.remove(size - 1);
             }
         }
+        if (null != statusListener) task.setTaskStatusListener(statusListener);
         return task;
     }
 
@@ -170,6 +183,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
         taskFilePath = null;
         taskFileName = null;
         taskNeedResume = true;
+        statusListener = null;
     }
 
     @Override
@@ -239,6 +253,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
     @Override
     public void handleMessage(Message msg) {
         DownloadTask task;
+        DownloadTask.ITaskStatusListener listener;
         switch (msg.what) {
             case MESSAGE_ON_STATE_CHANGE:
                 task = (DownloadTask) msg.obj;
@@ -284,7 +299,35 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
                     }
                 }
                 break;
+            case MESSAGE_ON_TASK_STATUS_CHANGE:
+                task = (DownloadTask) msg.obj;
+                listener = task.getStatusListener();
+                if (null != listener) {
+                    listener.onStatusChange(task.getDownloadStatus());
+                }
+                break;
+            case MESSAGE_ON_TASK_PROGRESS:
+                task = (DownloadTask) msg.obj;
+                listener = task.getStatusListener();
+                if (null != listener) {
+                    listener.onProgress(task.getPercentage());
+                }
+                break;
         }
+    }
+
+    void onTaskStatusChange(DownloadTask task) {
+        Message message = obtainMessage();
+        message.what = MESSAGE_ON_TASK_STATUS_CHANGE;
+        message.obj = task;
+        sendMessage(message);
+    }
+
+    void onTaskProgress(DownloadTask task) {
+        Message message = obtainMessage();
+        message.what = MESSAGE_ON_TASK_PROGRESS;
+        message.obj = task;
+        sendMessage(message);
     }
 
     void startTask(DownloadTask task) {
@@ -315,6 +358,12 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
             tasks.remove(task);
         }
         downloadHelper.downloadCancel(task, deleteFile);
+    }
+
+    boolean canRecycleTask(DownloadTask task) {
+        synchronized (tasks) {
+            return !tasks.contains(task);
+        }
     }
 
     void recycleTask(DownloadTask task) {

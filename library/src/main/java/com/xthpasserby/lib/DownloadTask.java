@@ -2,52 +2,55 @@ package com.xthpasserby.lib;
 
 import android.os.Environment;
 
+import java.lang.ref.WeakReference;
+
 /**
  * 下载任务
  */
 public class DownloadTask {
     public static final String ID = "_id";
-    protected long id = -1L;
+    private long id = -1L;
 
     public static final String DOWNLOAD_URL = "downloadUrl";
-    protected String downloadUrl;
+    private String downloadUrl;
 
     public static final String DOWNLOAD_STATUS = "downloadStatus";
-    protected DownloadStatus downloadStatus = DownloadStatus.UN_START;
+    private DownloadStatus downloadStatus = DownloadStatus.UN_START;
 
     public static final String FILE_PATH = "filePath";
-    protected String filePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/simple/download/"; // 存储路径
+    private String filePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/simple/download/"; // 存储路径
 
     public static final String FILE_NAME = "fileName";
-    protected String fileName;
+    private String fileName;
 
     public static final String FILE_SIZE = "fileSize";
-    protected String fileSize;// 文件大小
+    private String fileSize;// 文件大小
 
     public static final String PROGRESS_COUNT = "progressCount";
-    protected long progressCount = 0L; // 总大小
+    private long progressCount = 0L; // 总大小
 
     public static final String CURRENT_PROGRESS = "currentProgress";
-    protected long currentProgress = 0L;// 当前进度
+    private long currentProgress = 0L;// 当前进度
 
     public static final String PERCENTAGE = "percentage";
-    protected int percentage = 0; // 下载百分比0到1000
+    private int percentage = 0; // 下载百分比0到1000
 
     /**
      * 这两项项无需存储到数据库中
      */
-    protected boolean isCancel = false; // 下载是否主动取消或者暂停
-    protected boolean isNeedSaveIntoDataBase = true; // 是否需要将进度保存至数据库(不保存就无法断点续传)
+    private boolean isCancel = false; // 下载是否主动取消或者暂停
+    private boolean isNeedSaveIntoDataBase = true; // 是否需要将进度保存至数据库(不保存就无法断点续传)
 
     /**
      * 计算下载速度相关项
      *
      */
-    protected long lastTime = 0;
-    protected long lastCount = 0;
-    protected int speed = 0; // 单位KB/S，显示时可自行转换
+    private long lastTime = 0;
+    private long lastCount = 0;
+    private int speed = 0; // 单位KB/S，显示时可自行转换
 
     private SimpleDownloader simpleDownloader;
+    private WeakReference<ITaskStatusListener> statusListener;
 
     DownloadTask(SimpleDownloader simpleDownloader, String downloadUrl, String filePath, String fileName, boolean isNeedSaveIntoDataBase) {
         this.simpleDownloader = simpleDownloader;
@@ -73,6 +76,15 @@ public class DownloadTask {
         this.simpleDownloader = simpleDownloader;
     }
 
+    void setTaskStatusListener(ITaskStatusListener listener) {
+        if (null == listener) return;
+        statusListener = new WeakReference<>(listener);
+    }
+
+    ITaskStatusListener getStatusListener() {
+        return statusListener == null ? null : statusListener.get();
+    }
+
     public long getId() {
         return id;
     }
@@ -94,7 +106,10 @@ public class DownloadTask {
     }
 
     public void setDownloadStatus(DownloadStatus downloadStatus) {
-        this.downloadStatus = downloadStatus;
+        if (downloadStatus != this.downloadStatus) {
+            this.downloadStatus = downloadStatus;
+            simpleDownloader.onTaskStatusChange(this);
+        }
     }
 
     public String getFilePath() {
@@ -143,6 +158,7 @@ public class DownloadTask {
 
     public void setPercentage(int percentage) {
         this.percentage = percentage;
+        simpleDownloader.onTaskProgress(this);
     }
 
     public boolean isCancel() {
@@ -222,17 +238,24 @@ public class DownloadTask {
     }
 
     public void recycle() {
-        id = 0;
-        downloadUrl = null;
-        filePath = null;
-        fileName = null;
-        fileSize = null;
-        downloadStatus = DownloadStatus.UN_START;
-        progressCount = 0;
-        currentProgress = 0;
-        percentage = 0;
-        isCancel = false;
-        isNeedSaveIntoDataBase = true;
-        simpleDownloader.recycleTask(this);
+        if (simpleDownloader.canRecycleTask(this)) {
+            id = 0;
+            downloadUrl = null;
+            filePath = null;
+            fileName = null;
+            fileSize = null;
+            downloadStatus = DownloadStatus.UN_START;
+            progressCount = 0;
+            currentProgress = 0;
+            percentage = 0;
+            isCancel = false;
+            isNeedSaveIntoDataBase = true;
+            simpleDownloader.recycleTask(this);
+        }
+    }
+
+    public interface ITaskStatusListener {
+        void onStatusChange(DownloadStatus status);
+        void onProgress(int percentage);
     }
 }
