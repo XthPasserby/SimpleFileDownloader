@@ -157,8 +157,10 @@ public class DownloadTask {
     }
 
     public void setPercentage(int percentage) {
-        this.percentage = percentage;
-        simpleDownloader.onTaskProgress(this);
+        if (this.percentage != percentage) {
+            this.percentage = percentage;
+            simpleDownloader.onTaskProgress(this);
+        }
     }
 
     public boolean isCancel() {
@@ -231,6 +233,10 @@ public class DownloadTask {
 
     public void resume() {
         simpleDownloader.resumeTask(this);
+    }
+
+    public void cancel() {
+        cancel(true);
     }
 
     public void cancel(boolean deleteFile) {

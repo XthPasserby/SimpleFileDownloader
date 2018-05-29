@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.xthpasserby.lib.database.DownloadDataBaseManager;
 import com.xthpasserby.lib.utils.CloseUtil;
+import com.xthpasserby.lib.utils.FileSizeUtil;
 import com.xthpasserby.lib.utils.LogUtil;
 
 import java.io.File;
@@ -33,8 +34,6 @@ import okio.Okio;
  * 下载工具类，通过okhttp实现，使用{@link IDownloadListener}传递事件
  */
 public class SimpleDownloadHelper {
-    private static final int PERCENTAGE = 100;
-    private static final int PERMILLAGE = 1000;
     private static OkHttpClient mHttpClient = null;
     private static DownloadDataBaseManager dbManger;
     private static IDownloadListener mListener;
@@ -47,11 +46,12 @@ public class SimpleDownloadHelper {
      */
     private Map<DownloadTask, Call> downloadTaskCallMap = Collections.synchronizedMap(new HashMap<DownloadTask, Call>());
     // 进度条更新模式
-    private int progressType = PERCENTAGE;
+    private final int progressType;
 
-    SimpleDownloadHelper(Context context) {
-        mHttpClient = new OkHttpClient.Builder().readTimeout(30, TimeUnit.SECONDS).build();
+    SimpleDownloadHelper(Context context, int timeOut, int progressType) {
+        mHttpClient = new OkHttpClient.Builder().readTimeout(timeOut, TimeUnit.SECONDS).build();
         dbManger = new DownloadDataBaseManager(context.getApplicationContext());
+        this.progressType = progressType;
     }
 
     /**
@@ -120,7 +120,7 @@ public class SimpleDownloadHelper {
     }
 
     /**
-     * 下载实现类
+     * 下载实现
      * @param task 下载内容
      * @param fileName 保存文件
      * @param isResume 是否为断点续传
@@ -177,25 +177,26 @@ public class SimpleDownloadHelper {
                 request = new Request.Builder().url(task.getDownloadUrl()).build();
             }
 
-            if (isResume) {
-                outFile.seek(startPos);
+            Call call = mHttpClient.newCall(request);
+            downloadTaskCallMap.put(task, call);
+
+            response = call.execute();
+            if (isResume && startPos > 0 ) {
+                // 只有服务器支持断点续传，才使用断点续传
+                if (TextUtils.isEmpty(response.header("accept-ranges"))) {
+                    LogUtil.e("accept-ranges is null DOWNLOAD_RESUME_ERROR!!!");
+                    task.setDownloadStatus(DownloadStatus.RESUME_ERROR);
+                    onStatusChange(task);
+                    isResume = false;
+                    startPos = 0;
+                } else {
+                    outFile.seek(startPos);
+                }
             }
             fileOutputStream = new FileOutputStream(outFile.getFD());
             sink = Okio.buffer(Okio.sink(fileOutputStream));
             buffer = sink.buffer();
-        } catch (IOException e) {
-            if (task.getDownloadStatus() == DownloadStatus.DOWNLOADING) {
-                task.setDownloadStatus(DownloadStatus.FAILURE);
-                onStatusChange(task);
-            }
-            LogUtil.w(Log.getStackTraceString(e));
-            return;
-        }
 
-        Call call = mHttpClient.newCall(request);
-        downloadTaskCallMap.put(task, call);
-        try {
-            response = call.execute();
             long totalLength;
             if (response.isSuccessful()) {
                 ResponseBody body = response.body();
@@ -204,6 +205,7 @@ public class SimpleDownloadHelper {
                 } else {
                     totalLength = body.contentLength();
                     task.setProgressCount(totalLength);
+                    task.setFileSize(FileSizeUtil.byteToSize(totalLength));
                 }
                 source = body.source();
                 long sum = 0;
@@ -212,6 +214,7 @@ public class SimpleDownloadHelper {
                 int speed = 0;
                 long time = 0;
                 task.setDownloadStatus(DownloadStatus.DOWNLOADING);
+                task.setLastCount(0);
                 while (!task.isCancel() && (len = source.read(buffer, bufferSize)) > 0) {
                     sink.emit();
                     sum += len;
@@ -231,7 +234,7 @@ public class SimpleDownloadHelper {
                         onProgress(task);
                         // 控制写入数据库次数
                         if (task.isNeedSaveIntoDataBase() && curProgress != lastProgress) {
-                            if (-1 == task.getId()) {
+                            if (1 > task.getId()) {
                                 dbManger.addDownloadTask(task);
                             } else {
                                 dbManger.updateDownloadTask(task);
@@ -241,20 +244,21 @@ public class SimpleDownloadHelper {
                 }
                 if (!task.isCancel()) {
                     task.setDownloadStatus(DownloadStatus.SUCCESS);
+                    onStatusChange(task);
                 }
-                onStatusChange(task);
             } else {
                 if (task.getDownloadStatus() == DownloadStatus.DOWNLOADING) {
                     task.setDownloadStatus(DownloadStatus.FAILURE);
+                    LogUtil.d(task.getDownloadUrl() + "---DOWNLOAD_FAILURE");
                     onStatusChange(task);
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LogUtil.w(Log.getStackTraceString(e));
             if (task.getDownloadStatus() == DownloadStatus.DOWNLOADING) {
                 task.setDownloadStatus(DownloadStatus.FAILURE);
+                LogUtil.d(task.getDownloadUrl() + "---DOWNLOAD_FAILURE");
                 onStatusChange(task);
-                LogUtil.w(Log.getStackTraceString(e));
             }
             if (!TextUtils.isEmpty(e.getMessage()) && e.getMessage().contains("ENOSPC")) {
                 // write failed: ENOSPC (No space left on device)
@@ -302,6 +306,9 @@ public class SimpleDownloadHelper {
             }
         }
         task.setDownloadStatus(DownloadStatus.CANCEL);
+        task.setPercentage(0);
+        task.setCurrentProgress(0);
+        task.setProgressCount(0);
         onStatusChange(task);
 
         if (isDel) {
@@ -314,20 +321,23 @@ public class SimpleDownloadHelper {
 
     private void onStatusChange(DownloadTask task) {
         switch (task.getDownloadStatus()) {
+            case START:
             case SUCCESS:
             case FAILURE:
             case PAUSE:
                 if (!task.isNeedSaveIntoDataBase()) {
                     break;
                 }
-                if (-1 == task.getId()) {
+                if (1 > task.getId()) {
                     dbManger.addDownloadTask(task);
                 } else {
                     dbManger.updateDownloadTask(task);
                 }
                 break;
             case CANCEL:
-                dbManger.removeDownloadTask(task);
+                if (dbManger.removeDownloadTask(task)) {
+                    task.setId(0);
+                }
                 break;
         }
 

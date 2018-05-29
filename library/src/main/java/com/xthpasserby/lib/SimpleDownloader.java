@@ -14,9 +14,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created on 2018/5/25.
- */
 public class SimpleDownloader extends Handler implements IDownloadListener {
     private static final int MESSAGE_ON_STATE_CHANGE = 0xBA0;
     private static final int MESSAGE_ON_PROGRESS = 0xBA1;
@@ -24,6 +21,9 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
     private static final int MESSAGE_ON_TASK_STATUS_CHANGE = 0xBA3;
     private static final int MESSAGE_ON_TASK_PROGRESS = 0xBA4;
     private static final int MAX_POOL_SIZE = 100;
+    private static final int DEFAULT_TIME_OUT = 30;
+    public static final int PERCENTAGE = 100;
+    public static final int PERMILLAGE = 1000;
     private static final List<DownloadTask> taskPool = new ArrayList<>();
     private static SimpleDownloader sInstance;
     private SimpleDownloadHelper downloadHelper;
@@ -38,33 +38,39 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
     private boolean taskNeedResume = true;
     private DownloadTask.ITaskStatusListener statusListener;
 
-    public static SimpleDownloader init(Context context) {
+    public static void init(Context context) {
+        init(context, DEFAULT_TIME_OUT, PERCENTAGE);
+    }
+
+    public static void init(Context context, int timeOut, int progressType) {
         if (null == sInstance) {
             synchronized (SimpleDownloader.class) {
                 if (null == sInstance) {
-                    sInstance = new SimpleDownloader(context);
+                    if (progressType != PERCENTAGE && progressType != PERMILLAGE) {
+                        LogUtil.e("progressType must been PERCENTAGE or PERMILLAGE!");
+                        progressType = PERCENTAGE;
+                    }
+                    sInstance = new SimpleDownloader(context, timeOut, progressType);
                 }
             }
         }
-        return sInstance;
     }
 
-    public static SimpleDownloader with() {
+    public static SimpleDownloader getInstance() {
         if (null == sInstance) {
             LogUtil.e("you should init first!");
         }
-
         return sInstance;
     }
 
-    private SimpleDownloader(Context context) {
+    private SimpleDownloader(Context context, int timeOut, int progressType) {
         super(Looper.getMainLooper());
         if (null == context) {
             DEFAULT_DOWNLOAD_FILE_PATH = null;
             LogUtil.e("context is null!");
             return;
         }
-        downloadHelper = new SimpleDownloadHelper(context.getApplicationContext());
+        downloadHelper = new SimpleDownloadHelper(context.getApplicationContext(), timeOut, progressType);
         downloadHelper.setDownloadListener(this);
         List<DownloadTask> list = downloadHelper.getAllDownloadTask();
         if (null != list) {
@@ -88,6 +94,16 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
 
     public List<DownloadTask> getAllTasks() {
         return tasks;
+    }
+
+    public void clearAllTasks() {
+        synchronized (tasks) {
+            for (int i = 0; i < tasks.size(); i++) {
+                DownloadTask task = tasks.get(i);
+                cancelTask(task, true);
+                i--;
+            }
+        }
     }
 
     public SimpleDownloader url(String url) {
@@ -122,6 +138,11 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
         return this;
     }
 
+    /**
+     * 添加对所有下载任务状态监听(在子线程回调)
+     * @param listener {@link IDownloadListener}
+     * @return
+     */
     public SimpleDownloader addDownloadListener(IDownloadListener listener) {
         if (null == listener) {
             LogUtil.e("listener is null!");
@@ -134,6 +155,11 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
         return this;
     }
 
+    /**
+     * 添加对所有下载任务状态监听(在主线程回调)
+     * @param listener {@link IDownloadListener}
+     * @return
+     */
     public SimpleDownloader addDownloadListenerOnMainThread(IDownloadListener listener) {
         if (null == listener) {
             LogUtil.e("listener is null!");
@@ -146,6 +172,11 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
         return this;
     }
 
+    /**
+     * 设置单个task状态监听(在主线程回调)
+     * @param listener {@link DownloadTask.ITaskStatusListener}
+     * @return
+     */
     public SimpleDownloader setTaskStatusChangeLisener(DownloadTask.ITaskStatusListener listener) {
         if (null == listener) {
             LogUtil.e("listener is null!");
@@ -165,13 +196,15 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
     }
 
     private DownloadTask obtainTask() {
-        DownloadTask task;
-        synchronized (taskPool) {
-            int size = taskPool.size();
-            if (size < 1) {
-                task = DownloadTaskFactory.buildTask(this, taskUrl, taskFilePath, taskFileName, taskNeedResume);
-            } else {
-                task = taskPool.remove(size - 1);
+        DownloadTask task = isTasksContains(taskUrl, taskFilePath, taskFileName);
+        if (null == task) {
+            synchronized (taskPool) {
+                int size = taskPool.size();
+                if (size < 1) {
+                    task = DownloadTaskFactory.buildTask(this, taskUrl, taskFilePath, taskFileName, taskNeedResume);
+                } else {
+                    task = taskPool.remove(size - 1);
+                }
             }
         }
         if (null != statusListener) task.setTaskStatusListener(statusListener);
@@ -184,6 +217,21 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
         taskFileName = null;
         taskNeedResume = true;
         statusListener = null;
+    }
+
+    private DownloadTask isTasksContains(final String url, final String filePath, final String fileName) {
+        synchronized (tasks) {
+            DownloadTask resTask = null;
+            for (DownloadTask task : tasks) {
+                if (TextUtils.equals(url, task.getDownloadUrl())
+                        && TextUtils.equals(filePath, task.getFilePath())
+                        && TextUtils.equals(fileName, task.getFileName())) {
+                    resTask = task;
+                    break;
+                }
+            }
+            return resTask;
+        }
     }
 
     @Override

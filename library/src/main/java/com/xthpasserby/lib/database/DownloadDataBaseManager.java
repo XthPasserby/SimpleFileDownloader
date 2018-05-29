@@ -49,7 +49,7 @@ public class DownloadDataBaseManager {
 
     public boolean addDownloadTask(DownloadTask task) {
         if (DownloadStatus.CANCEL == task.getDownloadStatus()) return false;
-        LogUtil.e("addDownloadTask id =" + task.getId() + ", file_name = " + task.getFileName() + ", status = " + task.getDownloadStatus());
+        LogUtil.d("addDownloadTask id =" + task.getId() + ", file_name = " + task.getFileName() + ", status = " + task.getDownloadStatus());
         ContentValues values = obtainContentValues(task);
         long id = 0;
         synchronized (this) {
@@ -71,15 +71,15 @@ public class DownloadDataBaseManager {
         synchronized (this) {
             delRes = dataBase.delete(TABLE_NAME, DownloadTask.ID + "=" + task.getId(), null);
         }
-        if (task.getId() != -1 && 1 > delRes)
+        if (task.getId() > 0 && 1 > delRes)
             res = false;
-        LogUtil.e("removeDownloadTask id =" + task.getId() + ", file_name = " + task.getFileName() + ", status = " + task.getDownloadStatus() + ", delRes = " + delRes);
+        LogUtil.d("removeDownloadTask id =" + task.getId() + ", file_name = " + task.getFileName() + ", status = " + task.getDownloadStatus() + ", delRes = " + delRes);
         if (!res) {
             for (int i = 0; i < 3; i++) {
                 synchronized (this) {
                     delRes = dataBase.delete(TABLE_NAME, DownloadTask.ID + "=" + task.getId(), null);
                 }
-                LogUtil.e("removeDownloadTask FOR i = " + i + ", id =" + task.getId() + ", file_name = " + task.getFileName() + ", status = " + task.getDownloadStatus() + ", delRes = " + delRes);
+                LogUtil.d("removeDownloadTask FOR i = " + i + ", id =" + task.getId() + ", file_name = " + task.getFileName() + ", status = " + task.getDownloadStatus() + ", delRes = " + delRes);
                 if (delRes > 0) {
                     res = true;
                     break;
@@ -112,7 +112,7 @@ public class DownloadDataBaseManager {
         }
 
         for (DownloadTask task : list) {
-            if (-1 == task.getId()) {
+            if (1 > task.getId()) {
                 addDownloadTask(task);
             } else {
                 updateDownloadTask(task);

@@ -76,6 +76,11 @@ public class ProgressDownloadButton extends BaseDownloadButton {
                 setText("继续");
                 setBackgroundResource(R.drawable.rectangle_grep_solid_bg);
                 break;
+            case BUTTON_STATUS_FAILURE:
+                setProgressIsShow(false);
+                setText("重新下载");
+                setBackgroundResource(R.drawable.rectangle_blue_solid_bg);
+                break;
             case BUTTON_STATUS_NORMAL:
             default:
                 setProgressIsShow(false);
@@ -87,7 +92,7 @@ public class ProgressDownloadButton extends BaseDownloadButton {
 
     @Override
     public void onProgress(int percentage) {
-        setText(String.format("%1$s%%", percentage));
+        if (mStatus == BUTTON_STATUS_DOWNLOADING) setText(String.format("%1$s%%", percentage));
         setProgress(percentage);
     }
 

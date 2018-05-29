@@ -16,6 +16,7 @@ public abstract class BaseDownloadButton extends AppCompatTextView implements Vi
     protected static final int BUTTON_STATUS_DOWNLOADING = 1;
     protected static final int BUTTON_STATUS_PAUSE = 2;
     protected static final int BUTTON_STATUS_INSTALL = 3;
+    protected static final int BUTTON_STATUS_FAILURE = 4;
 
     // 按钮当前状态
     protected int mStatus = BUTTON_STATUS_NORMAL;
@@ -64,6 +65,9 @@ public abstract class BaseDownloadButton extends AppCompatTextView implements Vi
             case BUTTON_STATUS_DOWNLOADING:
                 mDataBean.pause();
                 break;
+            case BUTTON_STATUS_FAILURE:
+                mDataBean.start();
+                break;
             case BUTTON_STATUS_NORMAL:
             default:
                 mDataBean.start();
@@ -88,6 +92,7 @@ public abstract class BaseDownloadButton extends AppCompatTextView implements Vi
             case SUCCESS:
                 mStatus = BUTTON_STATUS_INSTALL;
                 break;
+            case RESUME_ERROR:
             case START:
             case DOWNLOADING:
             case RESUME:
@@ -96,13 +101,18 @@ public abstract class BaseDownloadButton extends AppCompatTextView implements Vi
             case PAUSE:
                 mStatus = BUTTON_STATUS_PAUSE;
                 break;
+            case FAILURE:
+                mStatus = BUTTON_STATUS_FAILURE;
+                break;
+            case CANCEL:
+            case UN_START:
             default:
                 mStatus = BUTTON_STATUS_NORMAL;
                 break;
         }
     }
 
-    protected String getDownloadSpeedString(Context mContext, int speed) {
+    protected String getDownloadSpeedString(int speed) {
         String mSpeed;
         if (speed > 1024) {
             mSpeed = String.format(mContext.getString(R.string.download_speed_mb), ((float)speed / 1024));

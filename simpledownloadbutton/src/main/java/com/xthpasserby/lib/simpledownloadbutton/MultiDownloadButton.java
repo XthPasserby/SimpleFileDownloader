@@ -12,7 +12,6 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
 
-
 public class MultiDownloadButton extends BaseDownloadButton {
     private static final int PROGRESS_RADIUS = 20;
 
@@ -112,6 +111,7 @@ public class MultiDownloadButton extends BaseDownloadButton {
             case BUTTON_STATUS_PAUSE:
                 setProgress(mDataBean.getPercentage());
                 break;
+            case BUTTON_STATUS_FAILURE:
             case BUTTON_STATUS_NORMAL:
             default:
                     break;
@@ -174,7 +174,7 @@ public class MultiDownloadButton extends BaseDownloadButton {
         switch (mStatus) {
             case BUTTON_STATUS_DOWNLOADING:
                 canvas.drawBitmap(mPauseBitmap, mPausePoint.x, mPausePoint.y, mPaint);
-                mSpeed = getDownloadSpeedString(mContext, mDataBean.getSpeed());
+                mSpeed = getDownloadSpeedString(mDataBean.getSpeed());
                 canvas.drawText(mSpeed, mTopCentPoint.x + mProgressRadius - mTextPaint.measureText(mSpeed) / 2, mTopCentPoint.y + mProgressRadius + mTextOffset, mTextPaint);
                 break;
             case BUTTON_STATUS_PAUSE:
@@ -190,6 +190,9 @@ public class MultiDownloadButton extends BaseDownloadButton {
                 mPaint.setColor(colorGrey);
                 setText("已完成");
                 break;
+            case BUTTON_STATUS_FAILURE:
+                mPaint.setColor(colorBlue);
+                setText("重新下载");
             default:
                 mPaint.setColor(colorBlue);
                 setText("下载");
