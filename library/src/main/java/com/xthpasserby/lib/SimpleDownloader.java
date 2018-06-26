@@ -42,6 +42,12 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
         init(context, DEFAULT_TIME_OUT, PERCENTAGE);
     }
 
+    /**
+     * 设置
+     * @param context
+     * @param timeOut
+     * @param progressType
+     */
     public static void init(Context context, int timeOut, int progressType) {
         if (null == sInstance) {
             synchronized (SimpleDownloader.class) {
@@ -139,7 +145,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
     }
 
     /**
-     * 添加对所有下载任务状态监听(在子线程回调)
+     * 添加对所有下载任务状态监听(在下载线程回调)，可以设置多个监听
      * @param listener {@link IDownloadListener}
      * @return
      */
@@ -156,7 +162,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
     }
 
     /**
-     * 添加对所有下载任务状态监听(在主线程回调)
+     * 添加对所有下载任务状态监听(在主线程回调)，可以设置多个监听
      * @param listener {@link IDownloadListener}
      * @return
      */
@@ -173,7 +179,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
     }
 
     /**
-     * 设置单个task状态监听(在主线程回调)
+     * 设置单个task状态监听(在主线程回调)，一个task只能设置一个监听
      * @param listener {@link DownloadTask.ITaskStatusListener}
      * @return
      */

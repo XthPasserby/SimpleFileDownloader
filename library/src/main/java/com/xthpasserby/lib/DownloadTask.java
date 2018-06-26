@@ -18,7 +18,7 @@ public class DownloadTask {
     private DownloadStatus downloadStatus = DownloadStatus.UN_START;
 
     public static final String FILE_PATH = "filePath";
-    private String filePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/simple/download/"; // 存储路径
+    private String filePath; // 存储路径
 
     public static final String FILE_NAME = "fileName";
     private String fileName;

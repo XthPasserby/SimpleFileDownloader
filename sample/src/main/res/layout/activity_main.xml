@@ -6,6 +6,27 @@
     android:gravity="center"
     android:orientation="vertical">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/button_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="下载"
+            android:textColor="#666666"
+            android:textSize="15sp" />
+    </LinearLayout>
+
     <com.xthpasserby.lib.simpledownloadbutton.MultiDownloadButton
         android:id="@+id/button_1"
         android:layout_width="63dp"
