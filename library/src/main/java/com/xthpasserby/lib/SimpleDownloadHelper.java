@@ -147,7 +147,7 @@ public class SimpleDownloadHelper {
         Request request;
         if (isResume) {
             request = new Request.Builder().url(task.getDownloadUrl())
-                    .addHeader("Range", "bytes=" + startPos + "-" + endPos)
+                    .addHeader("Range", "bytes=" + startPos + "-" + (endPos - 1))
                     .build();
         } else {
             request = new Request.Builder().url(task.getDownloadUrl()).build();

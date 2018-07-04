@@ -7,6 +7,6 @@ public class FileSizeUtil {
     public static String byteToSize(long byteCount) {
         if (byteCount < UNIT) return byteCount + " B";
         int exp = (int) (Math.log(byteCount) / Math.log(UNIT));
-        return String.format("%.1f %sB", byteCount / Math.pow(UNIT, exp), UNIT_CHAR[exp - 1]);
+        return String.format("%1%.1f %2$sB", byteCount / Math.pow(UNIT, exp), UNIT_CHAR[exp - 1]);
     }
 }

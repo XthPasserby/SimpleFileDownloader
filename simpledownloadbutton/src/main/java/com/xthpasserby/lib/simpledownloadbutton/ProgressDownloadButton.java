@@ -59,6 +59,11 @@ public class ProgressDownloadButton extends BaseDownloadButton {
                 setText("下载");
                 setBackgroundResource(R.drawable.rectangle_grep_solid_bg);
                 break;
+            case BUTTON_STATUS_WAIT:
+                setProgressIsShow(false);
+                setText("等待");
+                setBackgroundResource(R.drawable.rectangle_grep_solid_bg);
+                break;
             case BUTTON_STATUS_INSTALL:
                 setProgressIsShow(false);
                 setText("已完成");

@@ -113,6 +113,7 @@ public class MultiDownloadButton extends BaseDownloadButton {
                 break;
             case BUTTON_STATUS_FAILURE:
             case BUTTON_STATUS_NORMAL:
+            case BUTTON_STATUS_WAIT:
             default:
                     break;
         }
@@ -149,6 +150,7 @@ public class MultiDownloadButton extends BaseDownloadButton {
                 drawProgress(canvas);
                 break;
             case BUTTON_STATUS_INSTALL:
+            case BUTTON_STATUS_WAIT:
                 drawButton(canvas);
                 break;
         }
@@ -186,6 +188,10 @@ public class MultiDownloadButton extends BaseDownloadButton {
 
     private void drawButton(Canvas canvas) {
         switch (mStatus) {
+            case BUTTON_STATUS_WAIT:
+                mPaint.setColor(colorGrey);
+                setText("等待");
+                break;
             case BUTTON_STATUS_INSTALL:
                 mPaint.setColor(colorGrey);
                 setText("已完成");

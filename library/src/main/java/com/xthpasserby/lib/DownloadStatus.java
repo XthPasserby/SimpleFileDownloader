@@ -2,6 +2,7 @@ package com.xthpasserby.lib;
 
 public enum DownloadStatus {
     UN_START,
+    WAIT,
     START,
     DOWNLOADING,
     PAUSE,

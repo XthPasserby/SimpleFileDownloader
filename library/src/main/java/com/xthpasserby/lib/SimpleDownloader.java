@@ -13,24 +13,30 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class SimpleDownloader extends Handler implements IDownloadListener {
+public class SimpleDownloader extends Handler implements IDownloadListener, Runnable {
+    private static final int MAX_RUNNING_SIZE = 5;
     private static final int MESSAGE_ON_STATE_CHANGE = 0xBA0;
     private static final int MESSAGE_ON_PROGRESS = 0xBA1;
     private static final int MESSAGE_ON_OVER_FLOW = 0xBA2;
     private static final int MESSAGE_ON_TASK_STATUS_CHANGE = 0xBA3;
     private static final int MESSAGE_ON_TASK_PROGRESS = 0xBA4;
-    private static final int MAX_POOL_SIZE = 100;
     private static final int DEFAULT_TIME_OUT = 30;
     public static final int PERCENTAGE = 100;
     public static final int PERMILLAGE = 1000;
-    private static final List<DownloadTask> taskPool = new ArrayList<>();
     private static SimpleDownloader sInstance;
     private SimpleDownloadHelper downloadHelper;
     private final String DEFAULT_DOWNLOAD_FILE_PATH;
     private final List<WeakReference<IDownloadListener>> listeners = new ArrayList<>();
     private final List<WeakReference<IDownloadListener>> mainThreadListeners = new ArrayList<>();
     private final List<DownloadTask> tasks = new ArrayList<>();
+    private final PendingTaskQueue taskQueue = new PendingTaskQueue();
+    private volatile boolean executorRunning;
+    private ExecutorService queueExecutor = Executors.newSingleThreadExecutor();
+    private final List<DownloadTask> runningTasks;
+    private final int maxRunningSize;
 
     private String taskUrl;
     private String taskFilePath;
@@ -39,7 +45,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
     private DownloadTask.ITaskStatusListener statusListener;
 
     public static void init(Context context) {
-        init(context, DEFAULT_TIME_OUT, PERCENTAGE);
+        init(context, MAX_RUNNING_SIZE, DEFAULT_TIME_OUT, PERCENTAGE);
     }
 
     /**
@@ -48,7 +54,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
      * @param timeOut
      * @param progressType
      */
-    public static void init(Context context, int timeOut, int progressType) {
+    public static void init(Context context, int maxRunningSize, int timeOut, int progressType) {
         if (null == sInstance) {
             synchronized (SimpleDownloader.class) {
                 if (null == sInstance) {
@@ -56,7 +62,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
                         LogUtil.e("progressType must been PERCENTAGE or PERMILLAGE!");
                         progressType = PERCENTAGE;
                     }
-                    sInstance = new SimpleDownloader(context, timeOut, progressType);
+                    sInstance = new SimpleDownloader(context, maxRunningSize, timeOut, progressType);
                 }
             }
         }
@@ -69,12 +75,12 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
         return sInstance;
     }
 
-    private SimpleDownloader(Context context, int timeOut, int progressType) {
+    private SimpleDownloader(Context context, int maxRunningSize, int timeOut, int progressType) throws IllegalArgumentException {
         super(Looper.getMainLooper());
         if (null == context) {
             DEFAULT_DOWNLOAD_FILE_PATH = null;
             LogUtil.e("context is null!");
-            return;
+            throw new IllegalArgumentException();
         }
         downloadHelper = new SimpleDownloadHelper(context.getApplicationContext(), timeOut, progressType);
         downloadHelper.setDownloadListener(this);
@@ -92,6 +98,9 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
         } else {
             DEFAULT_DOWNLOAD_FILE_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + "/simple/download/files" + File.separator;
         }
+
+        this.maxRunningSize = maxRunningSize;
+        runningTasks = new ArrayList<>(maxRunningSize);
     }
 
     public static void enableDebug() {
@@ -112,28 +121,28 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
         }
     }
 
-    public SimpleDownloader url(String url) {
-        if (TextUtils.isEmpty(url)) {
+    public SimpleDownloader url(String url) throws IllegalArgumentException {
+        if (TextUtils.isEmpty(url) || (!url.startsWith("http://") && !url.startsWith("https://"))) {
             LogUtil.e("url is null!");
-            return null;
+            throw new IllegalArgumentException();
         }
         taskUrl = url;
         return this;
     }
 
-    public SimpleDownloader filePath(String filePath) {
+    public SimpleDownloader filePath(String filePath) throws IllegalArgumentException {
         if (TextUtils.isEmpty(filePath)) {
             LogUtil.e("filePath is null!");
-            return null;
+            throw new IllegalArgumentException();
         }
         taskFilePath = filePath;
         return this;
     }
 
-    public SimpleDownloader fileName(String fileName) {
+    public SimpleDownloader fileName(String fileName) throws IllegalArgumentException {
         if (TextUtils.isEmpty(fileName)) {
             LogUtil.e("fileName is null!");
-            return null;
+            throw new IllegalArgumentException();
         }
         taskFileName = fileName;
         return this;
@@ -149,10 +158,10 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
      * @param listener {@link IDownloadListener}
      * @return
      */
-    public SimpleDownloader addDownloadListener(IDownloadListener listener) {
+    public SimpleDownloader addDownloadListener(IDownloadListener listener) throws IllegalArgumentException {
         if (null == listener) {
             LogUtil.e("listener is null!");
-            return null;
+            throw new IllegalArgumentException();
         }
         synchronized (listeners) {
             WeakReference<IDownloadListener> weakReference = new WeakReference(listener);
@@ -166,10 +175,10 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
      * @param listener {@link IDownloadListener}
      * @return
      */
-    public SimpleDownloader addDownloadListenerOnMainThread(IDownloadListener listener) {
+    public SimpleDownloader addDownloadListenerOnMainThread(IDownloadListener listener) throws IllegalArgumentException {
         if (null == listener) {
             LogUtil.e("listener is null!");
-            return null;
+            throw new IllegalArgumentException();
         }
         synchronized (mainThreadListeners) {
             WeakReference<IDownloadListener> weakReference = new WeakReference(listener);
@@ -183,10 +192,10 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
      * @param listener {@link DownloadTask.ITaskStatusListener}
      * @return
      */
-    public SimpleDownloader setTaskStatusChangeLisener(DownloadTask.ITaskStatusListener listener) {
+    public SimpleDownloader setTaskStatusChangeLisener(DownloadTask.ITaskStatusListener listener) throws IllegalArgumentException {
         if (null == listener) {
             LogUtil.e("listener is null!");
-            return null;
+            throw new IllegalArgumentException();
         }
         statusListener = listener;
         return this;
@@ -204,14 +213,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
     private DownloadTask obtainTask() {
         DownloadTask task = isTasksContains(taskUrl, taskFilePath, taskFileName);
         if (null == task) {
-            synchronized (taskPool) {
-                int size = taskPool.size();
-                if (size < 1) {
-                    task = DownloadTaskFactory.buildTask(this, taskUrl, taskFilePath, taskFileName, taskNeedResume);
-                } else {
-                    task = taskPool.remove(size - 1);
-                }
-            }
+            task = DownloadTaskFactory.buildTask(this, taskUrl, taskFilePath, taskFileName, taskNeedResume);
         }
         if (null != statusListener) task.setTaskStatusListener(statusListener);
         return task;
@@ -242,6 +244,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
 
     @Override
     public void onStatusChange(DownloadTask task) {
+        checkTaskStatus(task);
         synchronized (listeners) {
             for (int i = 0; i < listeners.size(); i++) {
                 WeakReference<IDownloadListener> weakReference = listeners.get(i);
@@ -384,7 +387,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
         sendMessage(message);
     }
 
-    void startTask(DownloadTask task) {
+    private void startTask(DownloadTask task) {
         if (!tasks.contains(task)) {
             synchronized (tasks) {
                 tasks.add(task);
@@ -403,7 +406,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
         downloadHelper.downloadPause(task);
     }
 
-    void resumeTask(DownloadTask task) {
+    private void resumeTask(DownloadTask task) {
         downloadHelper.downloadResume(task);
     }
 
@@ -414,17 +417,63 @@ public class SimpleDownloader extends Handler implements IDownloadListener {
         downloadHelper.downloadCancel(task, deleteFile);
     }
 
-    boolean canRecycleTask(DownloadTask task) {
-        synchronized (tasks) {
-            return !tasks.contains(task);
+    void enqueue(DownloadTask task) {
+        task.setDownloadStatus(DownloadStatus.WAIT);
+        onStatusChange(task);
+        PendingTask pendingTask = PendingTask.obtainPendingTask(task);
+        taskQueue.enqueue(pendingTask);
+        if (!executorRunning) {
+            executorRunning = true;
+            queueExecutor.execute(this);
         }
     }
 
-    void recycleTask(DownloadTask task) {
-        synchronized (taskPool) {
-            if (taskPool.size() < MAX_POOL_SIZE) {
-                taskPool.add(task);
+    private void checkTaskStatus(DownloadTask task) {
+        switch (task.getDownloadStatus()) {
+            case FAILURE:
+            case PAUSE:
+            case SUCCESS:
+            case CANCEL:
+                synchronized (runningTasks) {
+                    runningTasks.remove(task);
+                }
+                if (!executorRunning) {
+                    executorRunning = true;
+                    queueExecutor.execute(this);
+                }
+                break;
+            default:
+        }
+    }
+
+    @Override
+    public void run() {
+        try {
+            while (true) {
+                synchronized (runningTasks) {
+                    if (runningTasks.size() >= maxRunningSize) break;
+                }
+                PendingTask pendingTask = taskQueue.poll(1000);
+                if (null == pendingTask) {
+                    pendingTask = taskQueue.poll();
+                    if (null == pendingTask) {
+                        executorRunning = false;
+                        return;
+                    }
+                }
+                final DownloadTask task = pendingTask.downloadTask;
+                PendingTask.releasePendingTask(pendingTask);
+                runningTasks.add(task);
+                if (task.getCurrentProgress() > 0) {
+                    resumeTask(task);
+                } else {
+                    startTask(task);
+                }
             }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            executorRunning = false;
         }
     }
 }

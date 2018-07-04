@@ -17,6 +17,7 @@ public abstract class BaseDownloadButton extends AppCompatTextView implements Vi
     protected static final int BUTTON_STATUS_PAUSE = 2;
     protected static final int BUTTON_STATUS_INSTALL = 3;
     protected static final int BUTTON_STATUS_FAILURE = 4;
+    protected static final int BUTTON_STATUS_WAIT = 5;
 
     // 按钮当前状态
     protected int mStatus = BUTTON_STATUS_NORMAL;
@@ -55,6 +56,7 @@ public abstract class BaseDownloadButton extends AppCompatTextView implements Vi
     public void onClick(View v) {
         if (null == mDataBean) return;
         switch (mStatus) {
+            case BUTTON_STATUS_WAIT:
             case BUTTON_STATUS_UNABLE:
                 break;
             case BUTTON_STATUS_INSTALL:
@@ -103,6 +105,9 @@ public abstract class BaseDownloadButton extends AppCompatTextView implements Vi
                 break;
             case FAILURE:
                 mStatus = BUTTON_STATUS_FAILURE;
+                break;
+            case WAIT:
+                mStatus = BUTTON_STATUS_WAIT;
                 break;
             case CANCEL:
             case UN_START:

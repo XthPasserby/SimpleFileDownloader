@@ -1,7 +1,5 @@
 package com.xthpasserby.lib;
 
-import android.os.Environment;
-
 import java.lang.ref.WeakReference;
 
 /**
@@ -76,7 +74,7 @@ public class DownloadTask {
         this.simpleDownloader = simpleDownloader;
     }
 
-    void setTaskStatusListener(ITaskStatusListener listener) {
+    public void setTaskStatusListener(ITaskStatusListener listener) {
         if (null == listener) return;
         statusListener = new WeakReference<>(listener);
     }
@@ -224,7 +222,7 @@ public class DownloadTask {
     }
 
     public void start() {
-        simpleDownloader.startTask(this);
+        simpleDownloader.enqueue(this);
     }
 
     public void pause() {
@@ -232,7 +230,7 @@ public class DownloadTask {
     }
 
     public void resume() {
-        simpleDownloader.resumeTask(this);
+        simpleDownloader.enqueue(this);
     }
 
     public void cancel() {
@@ -241,23 +239,6 @@ public class DownloadTask {
 
     public void cancel(boolean deleteFile) {
         simpleDownloader.cancelTask(this, deleteFile);
-    }
-
-    public void recycle() {
-        if (simpleDownloader.canRecycleTask(this)) {
-            id = 0;
-            downloadUrl = null;
-            filePath = null;
-            fileName = null;
-            fileSize = null;
-            downloadStatus = DownloadStatus.UN_START;
-            progressCount = 0;
-            currentProgress = 0;
-            percentage = 0;
-            isCancel = false;
-            isNeedSaveIntoDataBase = true;
-            simpleDownloader.recycleTask(this);
-        }
     }
 
     public interface ITaskStatusListener {
