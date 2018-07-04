@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <com.xthpasserby.lib.simpledownloadbutton.MultiDownloadButton
+        android:id="@+id/multi_download_button"
+        android:layout_width="63dp"
+        android:layout_height="63dp"
+        android:gravity="center"
+        android:textSize="15sp" />
+
+    <com.xthpasserby.lib.simpledownloadbutton.ProgressDownloadButton
+        android:id="@+id/progress_download_button"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="30dp"
+        android:background="@drawable/rectangle_blue_solid_bg"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="下载"
+        android:textColor="#FFFFFF"
+        app:max="100"
+        app:progressDrawable="@drawable/rectangle_blue_solid_bg" />
+</LinearLayout>

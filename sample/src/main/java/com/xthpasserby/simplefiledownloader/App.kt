@@ -8,7 +8,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        SimpleDownloader.init(this)
+        SimpleDownloader.init(this, 1, 30, SimpleDownloader.PERCENTAGE)
         if (BuildConfig.DEBUG) SimpleDownloader.enableDebug()
     }
 }
