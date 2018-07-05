@@ -8,11 +8,6 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.Gravity;
 
-
-/**
- * 带进度条的下载按钮
- * 注意事项参考{@link BaseDownloadButton}
- */
 public class ProgressDownloadButton extends BaseDownloadButton {
     private boolean isShowProgress = true;
     private int progress = 0;
@@ -56,17 +51,17 @@ public class ProgressDownloadButton extends BaseDownloadButton {
         switch (mStatus) {
             case BUTTON_STATUS_UNABLE:
                 setProgressIsShow(false);
-                setText("下载");
+                setText(R.string.button_txt_download);
                 setBackgroundResource(R.drawable.rectangle_grep_solid_bg);
                 break;
             case BUTTON_STATUS_WAIT:
                 setProgressIsShow(false);
-                setText("等待");
+                setText(R.string.button_txt_wait);
                 setBackgroundResource(R.drawable.rectangle_grep_solid_bg);
                 break;
             case BUTTON_STATUS_INSTALL:
                 setProgressIsShow(false);
-                setText("已完成");
+                setText(R.string.button_txt_completed);
                 setBackgroundResource(R.drawable.rectangle_grep_solid_bg);
                 break;
             case BUTTON_STATUS_DOWNLOADING:
@@ -78,18 +73,18 @@ public class ProgressDownloadButton extends BaseDownloadButton {
             case BUTTON_STATUS_PAUSE:
                 setProgressIsShow(true);
                 setProgress(mDataBean.getPercentage());
-                setText("继续");
+                setText(R.string.button_txt_resume);
                 setBackgroundResource(R.drawable.rectangle_grep_solid_bg);
                 break;
             case BUTTON_STATUS_FAILURE:
                 setProgressIsShow(false);
-                setText("重新下载");
+                setText(R.string.button_txt_restart);
                 setBackgroundResource(R.drawable.rectangle_blue_solid_bg);
                 break;
             case BUTTON_STATUS_NORMAL:
             default:
                 setProgressIsShow(false);
-                setText("下载");
+                setText(R.string.button_txt_download);
                 setBackgroundResource(R.drawable.rectangle_blue_solid_bg);
                 break;
         }

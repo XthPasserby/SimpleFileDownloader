@@ -2,4 +2,12 @@
     <string name="app_name">SimpleDownloadButton</string>
     <string name="download_speed_kb">%1$dKB/s</string>
     <string name="download_speed_mb">%1$.1fMB/s</string>
+
+    <string name="button_txt_download">download</string>
+    <string name="button_txt_wait">waiting</string>
+    <string name="button_txt_pause">pause</string>
+    <string name="button_txt_paused">paused</string>
+    <string name="button_txt_resume">resume</string>
+    <string name="button_txt_completed">completed</string>
+    <string name="button_txt_restart">restart</string>
 </resources>

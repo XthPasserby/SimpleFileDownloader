@@ -40,6 +40,7 @@ public class MultiDownloadButton extends BaseDownloadButton {
     private int mStrokeProgressWidth;
     private int colorBlue = 0xFF6BAFFF;
     private int colorGrey = 0xFFEEEEEE;
+    private String paused;
 
     public MultiDownloadButton(Context context) {
         this(context, null);
@@ -56,6 +57,7 @@ public class MultiDownloadButton extends BaseDownloadButton {
 
     private void init(Context context) {
         mContext = context;
+        paused = mContext.getText(R.string.button_txt_paused).toString();
 
         mStrokeButtonWidth = dp2px(1);
         mStrokeProgressWidth = dp2px(2);
@@ -162,7 +164,7 @@ public class MultiDownloadButton extends BaseDownloadButton {
         mPaint.setColor(colorBlue);
         canvas.drawRoundRect(mButtonRectF, mButtonRadius, mButtonRadius, mPaint);
         setTextColor(colorBlue);
-        setText("下载");
+        setText(R.string.button_txt_download);
     }
 
     private void drawProgress(Canvas canvas) {
@@ -181,7 +183,7 @@ public class MultiDownloadButton extends BaseDownloadButton {
                 break;
             case BUTTON_STATUS_PAUSE:
                 canvas.drawBitmap(mStartBitmap, mStartPoint.x, mStartPoint.y, mPaint);
-                canvas.drawText("已暂停", mTopCentPoint.x + mProgressRadius - mTextPaint.measureText("已暂停") * 2 / 3, mTopCentPoint.y + mProgressRadius + mTextOffset, mTextPaint);
+                canvas.drawText(paused, mTopCentPoint.x + mProgressRadius - mTextPaint.measureText(paused) * 2 / 3, mTopCentPoint.y + mProgressRadius + mTextOffset, mTextPaint);
                 break;
         }
     }
@@ -190,18 +192,18 @@ public class MultiDownloadButton extends BaseDownloadButton {
         switch (mStatus) {
             case BUTTON_STATUS_WAIT:
                 mPaint.setColor(colorGrey);
-                setText("等待");
+                setText(R.string.button_txt_wait);
                 break;
             case BUTTON_STATUS_INSTALL:
                 mPaint.setColor(colorGrey);
-                setText("已完成");
+                setText(R.string.button_txt_completed);
                 break;
             case BUTTON_STATUS_FAILURE:
                 mPaint.setColor(colorBlue);
-                setText("重新下载");
+                setText(R.string.button_txt_restart);
             default:
                 mPaint.setColor(colorBlue);
-                setText("下载");
+                setText(R.string.button_txt_download);
         }
         mPaint.setStyle(Paint.Style.FILL);
         canvas.drawRoundRect(mButtonRectF, mButtonRadius, mButtonRadius, mPaint);

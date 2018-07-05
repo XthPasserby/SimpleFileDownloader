@@ -1,0 +1,9 @@
+<resources>
+    <string name="button_txt_download">下载</string>
+    <string name="button_txt_wait">等待</string>
+    <string name="button_txt_pause">暂停</string>
+    <string name="button_txt_paused">已暂停</string>
+    <string name="button_txt_resume">继续</string>
+    <string name="button_txt_completed">已完成</string>
+    <string name="button_txt_restart">重新下载</string>
+</resources>
