@@ -1,39 +1,103 @@
 # SimpleFileDownloader
 
-#### 项目介绍
-{**以下是码云平台说明，您可以替换为您的项目简介**
-码云是开源中国推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用码云实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
+Android平台基于OkHttp的简单文件下载工具
 
-#### 软件架构
-软件架构说明
+### 如何使用
 
+```java
+// 全局初始化 推荐在Application中初始化
+SimpleDownloader.init(this);
+if (BuildConfig.DEBUG) {
+    SimpleDownloader.enableDebug()
+}
 
-#### 安装教程
+// 简单使用
+DownloadTask task = SimpleDownloader.getInstance()
+    .url("http://download_url")
+    .filePath("your_file_path")
+    .fileName("your_file_name")
+    // 设置对当前DownloadTask的监听，在主线程回调
+    .setTaskStatusChangeLisener(new DownloadTask.ITaskStatusListener() {
+        @Override
+        public void onStatusChange(DownloadStatus status) {
+            // 下载状态改变
+        }
 
-1. xxxx
-2. xxxx
-3. xxxx
+        @Override
+        public void onProgress(int percentage) {
+            // 下载进度变化
+        }
+    })
+    // 创建DoanloadTask实例
+    .buildTask();
 
-#### 使用说明
+// 添加对所有下载的监听，子线程回调不可刷新UI，若想在主线程回调可以替换成addDownloadListenerOnMainThread方法
+SimpleDownloader.getInstance().addDownloadListener(new IDownloadListener() {
+    @Override
+    public void onStatusChange(DownloadTask task) {
+        // 下载状态变化 
+        // task.getDownloadStatus()获取下载状态
+        // task.getSpeed()获取当前下载速度
+    }
 
-1. xxxx
-2. xxxx
-3. xxxx
+    @Override
+    public void onProgress(DownloadTask task) {
+        // 下载进度变化
+        // task.getPercentage()获取下载进度百分比
+    }
 
-#### 参与贡献
+    @Override
+    public void onStorageOverFlow() {
+        // 存储不足
+    }
+});
 
-1. Fork 本项目
-2. 新建 Feat_xxx 分支
-3. 提交代码
-4. 新建 Pull Request
+// 获取所有下载任务
+SimpleDownloader.getInstance().getAllTasks();
 
+// 取消所有下载任务
+SimpleDownloader.getInstance().clearAllTasks();
 
-#### 码云特技
+// DownloadTask方法
+task.start(); // 开始下载
+task.pause(); // 暂停下载
+task.resume(); // 继续下载
+task.cancel(); // 取消下载
+```
 
-1. 使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2. 码云官方博客 [blog.gitee.com](https://blog.gitee.com)
-3. 你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解码云上的优秀开源项目
-4. [GVP](https://gitee.com/gvp) 全称是码云最有价值开源项目，是码云综合评定出的优秀开源项目
-5. 码云官方提供的使用手册 [http://git.mydoc.io/](http://git.mydoc.io/)
-6. 码云封面人物是一档用来展示码云会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+// 配合SimpleDownloadButton使用
+
+布局文件：
+
+```xml
+<com.xthpasserby.lib.simpledownloadbutton.MultiDownloadButton
+        android:id="@+id/multi_download_button"
+        android:layout_width="63dp"
+        android:layout_height="63dp"
+        android:gravity="center"
+        android:textSize="15sp" />
+
+<com.xthpasserby.lib.simpledownloadbutton.ProgressDownloadButton
+        android:id="@+id/progress_download_button"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="30dp"
+        android:background="@drawable/rectangle_blue_solid_bg"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="下载"
+        android:textColor="#FFFFFF"
+        app:max="100"
+        app:progressDrawable="@drawable/rectangle_blue_solid_bg" />
+```
+
+调用代码： 
+
+```java
+SimpleDownloader.getInstance()
+    .url("http://download_url")
+    .filePath("your_file_path")
+    .fileName("your_file_name")
+    .setTaskStatusChangeLisener(SimpleDownloadButton)
+    .buildTask();
+```
