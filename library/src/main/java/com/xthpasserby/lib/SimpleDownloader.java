@@ -215,7 +215,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
         if (null == task) {
             task = DownloadTaskFactory.buildTask(this, taskUrl, taskFilePath, taskFileName, taskNeedResume);
         }
-        if (null != statusListener) task.setTaskStatusListener(statusListener);
+        if (null != statusListener) task.addTaskStatusListener(statusListener);
         return task;
     }
 
@@ -358,16 +358,14 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
                 break;
             case MESSAGE_ON_TASK_STATUS_CHANGE:
                 task = (DownloadTask) msg.obj;
-                listener = task.getStatusListener();
-                if (null != listener) {
-                    listener.onStatusChange(task.getDownloadStatus());
+                if (null != task) {
+                    task.onStatusChange(task.getDownloadStatus());
                 }
                 break;
             case MESSAGE_ON_TASK_PROGRESS:
                 task = (DownloadTask) msg.obj;
-                listener = task.getStatusListener();
-                if (null != listener) {
-                    listener.onProgress(task.getPercentage());
+                if (null != task) {
+                    task.onProgress(task.getPercentage());
                 }
                 break;
         }

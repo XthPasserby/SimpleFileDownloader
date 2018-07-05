@@ -26,7 +26,7 @@ class DownloadMangerAdapter : RecyclerView.Adapter<DownloadMangerAdapter.ItemHol
         val task = tasks!![position]
         holder.tvUrl.text = task.downloadUrl
         holder.button.bindData(task)
-        task!!.setTaskStatusListener(holder.button)
+        task!!.addTaskStatusListener(holder.button)
     }
 
     override fun getItemCount(): Int {

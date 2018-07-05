@@ -1,6 +1,8 @@
 package com.xthpasserby.lib;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 下载任务
@@ -48,7 +50,7 @@ public class DownloadTask {
     private int speed = 0; // 单位KB/S，显示时可自行转换
 
     private SimpleDownloader simpleDownloader;
-    private WeakReference<ITaskStatusListener> statusListener;
+    private final List<WeakReference<ITaskStatusListener>> statusListeners = new ArrayList<>();
 
     DownloadTask(SimpleDownloader simpleDownloader, String downloadUrl, String filePath, String fileName, boolean isNeedSaveIntoDataBase) {
         this.simpleDownloader = simpleDownloader;
@@ -74,13 +76,42 @@ public class DownloadTask {
         this.simpleDownloader = simpleDownloader;
     }
 
-    public void setTaskStatusListener(ITaskStatusListener listener) {
+    public void addTaskStatusListener(ITaskStatusListener listener) {
         if (null == listener) return;
-        statusListener = new WeakReference<>(listener);
+        synchronized (statusListeners) {
+            WeakReference<ITaskStatusListener> weakReference = new WeakReference(listener);
+            statusListeners.add(weakReference);
+        }
     }
 
-    ITaskStatusListener getStatusListener() {
-        return statusListener == null ? null : statusListener.get();
+    void onStatusChange(final DownloadStatus status) {
+        synchronized (statusListeners) {
+            for (int i = 0; i < statusListeners.size(); i++) {
+                WeakReference<ITaskStatusListener> weakReference = statusListeners.get(i);
+                if (weakReference.get() == null) {
+                    statusListeners.remove(i);
+                    weakReference = null;
+                    i--;
+                } else {
+                    weakReference.get().onStatusChange(status);
+                }
+            }
+        }
+    }
+
+    void onProgress(final int percentage) {
+        synchronized (statusListeners) {
+            for (int i = 0; i < statusListeners.size(); i++) {
+                WeakReference<ITaskStatusListener> weakReference = statusListeners.get(i);
+                if (weakReference.get() == null) {
+                    statusListeners.remove(i);
+                    weakReference = null;
+                    i--;
+                } else {
+                    weakReference.get().onProgress(percentage);
+                }
+            }
+        }
     }
 
     public long getId() {
