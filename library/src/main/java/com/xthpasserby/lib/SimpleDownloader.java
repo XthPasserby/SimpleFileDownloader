@@ -82,6 +82,8 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
             LogUtil.e("context is null!");
             throw new IllegalArgumentException();
         }
+        this.maxRunningSize = maxRunningSize;
+        runningTasks = new ArrayList<>(maxRunningSize);
         downloadHelper = new SimpleDownloadHelper(context.getApplicationContext(), timeOut, progressType);
         downloadHelper.setDownloadListener(this);
         List<DownloadTask> list = downloadHelper.getAllDownloadTask();
@@ -89,6 +91,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
             for (DownloadTask task : list) {
                 task.setSimpleDownloader(this);
                 tasks.add(task);
+                resumeQueue(task);
             }
         }
 
@@ -98,9 +101,6 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
         } else {
             DEFAULT_DOWNLOAD_FILE_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + "/simple/download/files" + File.separator;
         }
-
-        this.maxRunningSize = maxRunningSize;
-        runningTasks = new ArrayList<>(maxRunningSize);
     }
 
     public static void enableDebug() {
@@ -388,17 +388,6 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
     }
 
     private void startTask(DownloadTask task) {
-        if (!tasks.contains(task)) {
-            synchronized (tasks) {
-                tasks.add(task);
-            }
-        } else if (task.getDownloadStatus() != DownloadStatus.SUCCESS
-                || task.getDownloadStatus() != DownloadStatus.CANCEL
-                || task.getDownloadStatus() != DownloadStatus.FAILURE) {
-            // 防止重复下载
-            return;
-        }
-
         downloadHelper.downloadStart(task);
     }
 
@@ -418,13 +407,32 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
     }
 
     void enqueue(DownloadTask task) {
-        task.setDownloadStatus(DownloadStatus.WAIT);
-        onStatusChange(task);
+        synchronized (tasks) {
+            if (!tasks.contains(task)) {
+                tasks.add(task);
+            }
+        }
+        if (task.getDownloadStatus() != DownloadStatus.WAIT) downloadHelper.downloadWait(task);
         PendingTask pendingTask = PendingTask.obtainPendingTask(task);
         taskQueue.enqueue(pendingTask);
         if (!executorRunning) {
             executorRunning = true;
             queueExecutor.execute(this);
+        }
+    }
+
+    private void resumeQueue(DownloadTask task) {
+        if (task.getDownloadStatus() == DownloadStatus.WAIT
+                || task.getDownloadStatus() == DownloadStatus.START
+                || task.getDownloadStatus() == DownloadStatus.RESUME
+                || task.getDownloadStatus() == DownloadStatus.DOWNLOADING) {
+            if (task.getDownloadStatus() != DownloadStatus.WAIT) downloadHelper.downloadWait(task);
+            PendingTask pendingTask = PendingTask.obtainPendingTask(task);
+            taskQueue.enqueue(pendingTask);
+            if (!executorRunning) {
+                executorRunning = true;
+                queueExecutor.execute(this);
+            }
         }
     }
 
@@ -463,7 +471,15 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
                 }
                 final DownloadTask task = pendingTask.downloadTask;
                 PendingTask.releasePendingTask(pendingTask);
-                runningTasks.add(task);
+                synchronized (runningTasks) {
+                    // if task has already started ignore this task
+                    if (runningTasks.contains(task)) {
+                        LogUtil.w("task has been already started!");
+                        continue;
+                    } else {
+                        runningTasks.add(task);
+                    }
+                }
                 if (task.getCurrentProgress() > 0) {
                     resumeTask(task);
                 } else {

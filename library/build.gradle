@@ -8,7 +8,7 @@ android {
         minSdkVersion rootProject.minSdkVersion
         targetSdkVersion rootProject.targetSdkVersion
         versionCode 1
-        versionName "0.1"
+        versionName "0.1Beta"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 

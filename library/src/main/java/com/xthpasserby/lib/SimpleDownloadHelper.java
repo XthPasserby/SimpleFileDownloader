@@ -14,10 +14,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
@@ -44,7 +43,7 @@ public class SimpleDownloadHelper {
     /**
      *  下载任务列表
      */
-    private Map<DownloadTask, Call> downloadTaskCallMap = Collections.synchronizedMap(new HashMap<DownloadTask, Call>());
+    private Map<DownloadTask, Call> downloadTaskCallMap = new ConcurrentHashMap<>();
     // 进度条更新模式
     private final int progressType;
 
@@ -125,7 +124,7 @@ public class SimpleDownloadHelper {
      * @param fileName 保存文件
      * @param isResume 是否为断点续传
      */
-    void download(@NonNull DownloadTask task, @NonNull String fileName, boolean isResume) {
+    private void download(@NonNull DownloadTask task, @NonNull String fileName, boolean isResume) {
         LogUtil.d(task.getDownloadUrl() + (isResume ? "---DOWNLOAD_RESUME" : "---DOWNLOAD_START"));
         task.setLastTime(System.currentTimeMillis());
         task.setDownloadStatus(isResume ? DownloadStatus.RESUME : DownloadStatus.START);
@@ -319,8 +318,19 @@ public class SimpleDownloadHelper {
         }
     }
 
+    /**
+     * 等待下载
+     * @param task
+     */
+    void downloadWait(DownloadTask task) {
+        LogUtil.d(task.getDownloadUrl() + "---Download_WAIT");
+        task.setDownloadStatus(DownloadStatus.WAIT);
+        onStatusChange(task);
+    }
+
     private void onStatusChange(DownloadTask task) {
         switch (task.getDownloadStatus()) {
+            case WAIT:
             case START:
             case SUCCESS:
             case FAILURE:
