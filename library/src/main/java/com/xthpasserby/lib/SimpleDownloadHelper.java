@@ -32,14 +32,11 @@ import okio.Okio;
 /**
  * 下载工具类，通过okhttp实现，使用{@link IDownloadListener}传递事件
  */
-public class SimpleDownloadHelper {
+final class SimpleDownloadHelper {
     private static OkHttpClient mHttpClient = null;
     private static DownloadDataBaseManager dbManger;
     private static IDownloadListener mListener;
-    /**
-     * 调试模式是否开启
-     */
-    private static boolean isDebug = false;
+
     /**
      *  下载任务列表
      */
@@ -51,17 +48,6 @@ public class SimpleDownloadHelper {
         mHttpClient = new OkHttpClient.Builder().readTimeout(timeOut, TimeUnit.SECONDS).build();
         dbManger = new DownloadDataBaseManager(context.getApplicationContext());
         this.progressType = progressType;
-    }
-
-    /**
-     * 开启Debug打印
-     */
-    static void enableDebug() {
-        isDebug = true;
-    }
-
-    public static boolean isDebugEnable() {
-        return isDebug;
     }
 
     /**

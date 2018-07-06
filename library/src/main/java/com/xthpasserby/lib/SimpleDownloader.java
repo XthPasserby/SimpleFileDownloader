@@ -26,6 +26,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
     private static final int DEFAULT_TIME_OUT = 30;
     public static final int PERCENTAGE = 100;
     public static final int PERMILLAGE = 1000;
+    private static boolean isDebug = false;
     private static SimpleDownloader sInstance;
     private SimpleDownloadHelper downloadHelper;
     private final String DEFAULT_DOWNLOAD_FILE_PATH;
@@ -104,7 +105,11 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
     }
 
     public static void enableDebug() {
-        SimpleDownloadHelper.enableDebug();
+        isDebug = true;
+    }
+
+    public static boolean isDebugEnable() {
+        return isDebug;
     }
 
     public List<DownloadTask> getAllTasks() {

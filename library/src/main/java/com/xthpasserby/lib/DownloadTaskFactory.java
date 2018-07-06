@@ -2,8 +2,6 @@ package com.xthpasserby.lib;
 
 import android.text.TextUtils;
 
-import com.xthpasserby.lib.utils.LogUtil;
-
 /**
  * Created on 2018/5/23.
  */
@@ -13,10 +11,9 @@ public class DownloadTaskFactory {
         return new DownloadTask(id, downloadUrl, downloadStatus, filePath, fileName, fileSize, progressCount, currentProgress, percentage);
     }
 
-    static DownloadTask buildTask(SimpleDownloader simpleDownloader, String url, String filePath, String fileName, boolean isNeedResume) {
+    static DownloadTask buildTask(SimpleDownloader simpleDownloader, String url, String filePath, String fileName, boolean isNeedResume) throws IllegalArgumentException {
         if (TextUtils.isEmpty(url)) {
-            LogUtil.e("url is empty!");
-            return null;
+            throw new IllegalArgumentException();
         }
         return new DownloadTask(simpleDownloader, url, filePath, fileName, isNeedResume);
     }

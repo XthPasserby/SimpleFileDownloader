@@ -3,7 +3,7 @@ package com.xthpasserby.lib.utils;
 import android.os.Environment;
 import android.util.Log;
 
-import com.xthpasserby.lib.SimpleDownloadHelper;
+import com.xthpasserby.lib.SimpleDownloader;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -20,25 +20,25 @@ public class LogUtil {
     private static final int STACK_TRACE_LEVELS_UP = 5;
 
     public static void e(String msg) {
-        if (SimpleDownloadHelper.isDebugEnable()) {
+        if (SimpleDownloader.isDebugEnable()) {
             Log.e(LOG_TAG, getClassNameMethodNameAndLineNumber() + msg);
         }
     }
 
     public static void d(String msg) {
-        if (SimpleDownloadHelper.isDebugEnable()) {
+        if (SimpleDownloader.isDebugEnable()) {
             Log.d(LOG_TAG, getClassNameMethodNameAndLineNumber() + msg);
         }
     }
 
     public static void w(String msg) {
-        if (SimpleDownloadHelper.isDebugEnable()) {
+        if (SimpleDownloader.isDebugEnable()) {
             Log.w(LOG_TAG, getClassNameMethodNameAndLineNumber() + msg);
         }
     }
 
     public static void i(String msg) {
-        if (SimpleDownloadHelper.isDebugEnable()) {
+        if (SimpleDownloader.isDebugEnable()) {
             Log.i(LOG_TAG, getClassNameMethodNameAndLineNumber() + msg);
         }
     }
@@ -49,7 +49,7 @@ public class LogUtil {
      * @param msg
      */
     public static void logToFile(String msg) {
-        if (!SimpleDownloadHelper.isDebugEnable()) {
+        if (!SimpleDownloader.isDebugEnable()) {
             return;
         }
 
@@ -75,7 +75,7 @@ public class LogUtil {
      * @param exception
      */
     public static void exceptionToFile(Exception exception) {
-        if (!SimpleDownloadHelper.isDebugEnable()) {
+        if (!SimpleDownloader.isDebugEnable()) {
             return;
         }
 
