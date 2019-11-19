@@ -1,8 +1,20 @@
-# SimpleFileDownloader
+# SimpleFileDownloader [ ![Download](https://api.bintray.com/packages/xthpasserby/maven/SimpleFileDownloader/images/download.svg?version=0.0.1) ](https://bintray.com/xthpasserby/maven/SimpleFileDownloader/0.0.1/link)
 
 Android平台基于OkHttp的简单文件下载工具
 
 ### 如何使用
+
+配置gradle
+
+```
+// project的build.gradle文件中添加jcenter
+repositories {
+    jcenter()
+}
+
+// module的build.gradle文件中添加依赖
+implementation 'com.xthpasserby.lib:SimpleFileDownloader:0.0.1'
+```
 
 ```java
 // 全局初始化 推荐在Application中初始化

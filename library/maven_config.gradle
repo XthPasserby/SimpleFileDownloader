@@ -1,0 +1,10 @@
+apply plugin: 'com.novoda.bintray-release'
+
+publish {
+    userOrg = ''
+    groupId = 'com.xthpasserby.lib'
+    artifactId = 'SimpleFileDownloader'
+    publishVersion = '0.0.1'
+    desc = 'a simple file downloader on Android'
+    website = 'https://github.com/XthPasserby/SimpleFileDownloader'
+}

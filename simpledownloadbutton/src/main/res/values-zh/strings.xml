@@ -1,4 +1,8 @@
 <resources>
+    <string name="app_name">SimpleDownloadButton</string>
+    <string name="download_speed_kb">%1$dKB/s</string>
+    <string name="download_speed_mb">%1$.1fMB/s</string>
+
     <string name="button_txt_download">下载</string>
     <string name="button_txt_wait">等待</string>
     <string name="button_txt_pause">暂停</string>
