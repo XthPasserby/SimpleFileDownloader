@@ -2,6 +2,7 @@ package com.xthpasserby.simplefiledownloader
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import com.xthpasserby.lib.DownloadTask
 import com.xthpasserby.lib.SimpleDownloader
 import kotlinx.android.synthetic.main.activity_download_button.*
 
@@ -13,15 +14,15 @@ class DownloadButtonActivity : AppCompatActivity() {
 
         // MultiDownloadButton
         val task1 = SimpleDownloader.getInstance()
-                .url("http://newstatic.7guoyouxi.com/apps/10051872/10051872.apk")
-                .fileName("10051872.apk")
-                .setTaskStatusChangeLisener(multi_download_button)
+                .url("http://qg-file-oss.haiheng178.com/qiguo/apk/game/1573784166_182.apk")
+                .fileName("1573784166_182.apk")
+                .setTaskStatusChangeListenerOnMainThread(multi_download_button)
                 .buildTask()
         //ProgressDownloadButton
         val task2 = SimpleDownloader.getInstance()
-                .url("http://newstatic.7guoyouxi.com/apps/10053388/10053388.apk")
-                .fileName("10053388.apk")
-                .setTaskStatusChangeLisener(progress_download_button)
+                .url("http://qg-file-oss.haiheng178.com/qiguo/apk/game/1568964883_389.apk")
+                .fileName("1568964883_389.apk")
+                .setTaskStatusChangeListenerOnMainThread(progress_download_button)
                 .buildTask()
 
         multi_download_button.bindData(task1)

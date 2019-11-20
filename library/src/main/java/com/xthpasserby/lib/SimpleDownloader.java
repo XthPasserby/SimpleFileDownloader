@@ -43,6 +43,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
     private String taskFilePath;
     private String taskFileName;
     private boolean taskNeedResume = true;
+    private DownloadTask.ITaskStatusListener statusListenerOnMainThread;
     private DownloadTask.ITaskStatusListener statusListener;
 
     public static void init(Context context) {
@@ -197,7 +198,21 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
      * @param listener {@link DownloadTask.ITaskStatusListener}
      * @return
      */
-    public SimpleDownloader setTaskStatusChangeLisener(DownloadTask.ITaskStatusListener listener) throws IllegalArgumentException {
+    public SimpleDownloader setTaskStatusChangeListenerOnMainThread(DownloadTask.ITaskStatusListener listener) throws IllegalArgumentException {
+        if (null == listener) {
+            LogUtil.e("listener is null!");
+            throw new IllegalArgumentException();
+        }
+        statusListenerOnMainThread = listener;
+        return this;
+    }
+
+    /**
+     * 设置单个task状态监听(在下载线程回调)，一个task只能设置一个监听
+     * @param listener {@link DownloadTask.ITaskStatusListener}
+     * @return
+     */
+    public SimpleDownloader setTaskStatusChangeListener(DownloadTask.ITaskStatusListener listener) throws IllegalArgumentException {
         if (null == listener) {
             LogUtil.e("listener is null!");
             throw new IllegalArgumentException();
@@ -220,6 +235,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
         if (null == task) {
             task = DownloadTaskFactory.buildTask(this, taskUrl, taskFilePath, taskFileName, taskNeedResume);
         }
+        if (null != statusListenerOnMainThread) task.addTaskStatusListenerOnMainThread(statusListenerOnMainThread);
         if (null != statusListener) task.addTaskStatusListener(statusListener);
         return task;
     }
@@ -229,6 +245,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
         taskFilePath = null;
         taskFileName = null;
         taskNeedResume = true;
+        statusListenerOnMainThread = null;
         statusListener = null;
     }
 
@@ -250,6 +267,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
     @Override
     public void onStatusChange(DownloadTask task) {
         checkTaskStatus(task);
+        task.onStatusChange(task.getDownloadStatus());
         synchronized (listeners) {
             for (int i = 0; i < listeners.size(); i++) {
                 WeakReference<IDownloadListener> weakReference = listeners.get(i);
@@ -273,6 +291,7 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
 
     @Override
     public void onProgress(DownloadTask task) {
+        task.onProgress(task.getPercentage());
         synchronized (listeners) {
             for (int i = 0; i < listeners.size(); i++) {
                 WeakReference<IDownloadListener> weakReference = listeners.get(i);
@@ -364,13 +383,13 @@ public class SimpleDownloader extends Handler implements IDownloadListener, Runn
             case MESSAGE_ON_TASK_STATUS_CHANGE:
                 task = (DownloadTask) msg.obj;
                 if (null != task) {
-                    task.onStatusChange(task.getDownloadStatus());
+                    task.onStatusChangeOnMainThread(task.getDownloadStatus());
                 }
                 break;
             case MESSAGE_ON_TASK_PROGRESS:
                 task = (DownloadTask) msg.obj;
                 if (null != task) {
-                    task.onProgress(task.getPercentage());
+                    task.onProgressOnMainThread(task.getPercentage());
                 }
                 break;
         }

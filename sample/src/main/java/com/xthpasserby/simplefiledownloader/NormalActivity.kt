@@ -1,7 +1,9 @@
 package com.xthpasserby.simplefiledownloader
 
 import android.os.Bundle
+import android.os.Looper
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import com.xthpasserby.lib.DownloadStatus
 import com.xthpasserby.lib.DownloadTask
 import com.xthpasserby.lib.SimpleDownloader
@@ -16,9 +18,20 @@ class NormalActivity : AppCompatActivity(), DownloadTask.ITaskStatusListener {
         setContentView(R.layout.activity_normal)
 
         task = SimpleDownloader.getInstance()
-                .url("http://newstatic.7guoyouxi.com/apps/10053722/10053722.apk")
-                .fileName("10053722.apk")
-                .setTaskStatusChangeLisener(this)
+                .url("http://file-app.haiheng178.com/app/3.2.2/3.2.2.apk")
+                .fileName("3.2.2.apk")
+                .setTaskStatusChangeListenerOnMainThread(this)
+                .setTaskStatusChangeListener(object : DownloadTask.ITaskStatusListener{
+                    override fun onStatusChange(status: DownloadStatus?) {
+                        Log.e("***", "onStatusChange isMainThread = " + isMainThread())
+                        Log.e("***", "onStatusChange status = " + status)
+                    }
+
+                    override fun onProgress(percentage: Int) {
+                        Log.e("***", "onProgress isMainThread = " + isMainThread())
+                        Log.e("***", "onProgress percentage = " + percentage)
+                    }
+                })
                 .buildTask()
 
         normal_download_button.setOnClickListener {
@@ -31,6 +44,10 @@ class NormalActivity : AppCompatActivity(), DownloadTask.ITaskStatusListener {
 
         updateButtonStatus()
         progressBar.setProgress(task!!.percentage)
+    }
+
+    private fun isMainThread(): Boolean {
+        return Looper.getMainLooper().thread === Thread.currentThread()
     }
 
     private fun updateButtonStatus() {

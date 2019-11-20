@@ -1,4 +1,4 @@
-# SimpleFileDownloader [ ![Download](https://api.bintray.com/packages/xthpasserby/maven/SimpleFileDownloader/images/download.svg?version=0.0.1) ](https://bintray.com/xthpasserby/maven/SimpleFileDownloader/0.0.1/link)
+# SimpleFileDownloader [ ![Download](https://api.bintray.com/packages/xthpasserby/maven/SimpleFileDownloader/images/download.svg?version=0.0.2) ](https://bintray.com/xthpasserby/maven/SimpleFileDownloader/0.0.2/link)
 
 Android平台基于OkHttp的简单文件下载工具
 
@@ -13,7 +13,7 @@ repositories {
 }
 
 // module的build.gradle文件中添加依赖
-implementation 'com.xthpasserby.lib:SimpleFileDownloader:0.0.1'
+implementation 'com.xthpasserby.lib:SimpleFileDownloader:0.0.2'
 ```
 
 ```java
@@ -28,8 +28,8 @@ DownloadTask task = SimpleDownloader.getInstance()
     .url("http://download_url")
     .filePath("your_file_path")
     .fileName("your_file_name")
-    // 设置对当前DownloadTask的监听，在主线程回调
-    .setTaskStatusChangeLisener(new DownloadTask.ITaskStatusListener() {
+    // 设置对当前DownloadTask的监听，在主线程回调，可以使用setTaskStatusChangeListener设置在下载线程回调
+    .setTaskStatusChangeListenerOnMainThread(new DownloadTask.ITaskStatusListener() {
         @Override
         public void onStatusChange(DownloadStatus status) {
             // 下载状态改变
