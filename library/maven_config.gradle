@@ -4,7 +4,7 @@ publish {
     userOrg = ''
     groupId = 'com.xthpasserby.lib'
     artifactId = 'SimpleFileDownloader'
-    publishVersion = '0.0.2'
+    publishVersion = '0.0.3'
     desc = 'a simple file downloader on Android'
     website = 'https://github.com/XthPasserby/SimpleFileDownloader'
 }

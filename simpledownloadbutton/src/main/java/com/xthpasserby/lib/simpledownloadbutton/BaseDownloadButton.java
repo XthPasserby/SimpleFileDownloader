@@ -1,10 +1,11 @@
 package com.xthpasserby.lib.simpledownloadbutton;
 
 import android.content.Context;
-import android.support.v7.widget.AppCompatTextView;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
+
+import androidx.appcompat.widget.AppCompatTextView;
 
 import com.xthpasserby.lib.DownloadStatus;
 import com.xthpasserby.lib.DownloadTask;

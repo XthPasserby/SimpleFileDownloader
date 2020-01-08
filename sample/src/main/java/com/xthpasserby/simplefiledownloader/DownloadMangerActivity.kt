@@ -2,9 +2,9 @@ package com.xthpasserby.simplefiledownloader
 
 import android.os.Bundle
 import android.os.Handler
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.LinearLayoutManager
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.xthpasserby.lib.DownloadTask
 import com.xthpasserby.lib.IDownloadListener
 import com.xthpasserby.lib.SimpleDownloader

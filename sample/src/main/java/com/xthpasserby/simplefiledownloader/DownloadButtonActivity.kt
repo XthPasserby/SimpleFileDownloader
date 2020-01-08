@@ -1,8 +1,7 @@
 package com.xthpasserby.simplefiledownloader
 
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
-import com.xthpasserby.lib.DownloadTask
+import androidx.appcompat.app.AppCompatActivity
 import com.xthpasserby.lib.SimpleDownloader
 import kotlinx.android.synthetic.main.activity_download_button.*
 

@@ -1,6 +1,7 @@
 package com.xthpasserby.simplefiledownloader
 
 import android.app.Application
+import com.xthpasserby.lib.BuildConfig
 import com.xthpasserby.lib.SimpleDownloader
 
 class App : Application() {

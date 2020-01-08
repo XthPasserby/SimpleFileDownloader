@@ -1,6 +1,9 @@
-# SimpleFileDownloader [ ![Download](https://api.bintray.com/packages/xthpasserby/maven/SimpleFileDownloader/images/download.svg?version=0.0.2) ](https://bintray.com/xthpasserby/maven/SimpleFileDownloader/0.0.2/link)
+# SimpleFileDownloader [ ![Download](https://api.bintray.com/packages/xthpasserby/maven/SimpleFileDownloader/images/download.svg?version=0.0.3) ](https://bintray.com/xthpasserby/maven/SimpleFileDownloader/0.0.3/link)
 
 Android平台基于OkHttp的简单文件下载工具
+
+0.0.2 使用support库
+0.0.3 使用androidx
 
 ### 如何使用
 

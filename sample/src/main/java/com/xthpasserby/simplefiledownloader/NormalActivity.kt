@@ -2,8 +2,8 @@ package com.xthpasserby.simplefiledownloader
 
 import android.os.Bundle
 import android.os.Looper
-import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import com.xthpasserby.lib.DownloadStatus
 import com.xthpasserby.lib.DownloadTask
 import com.xthpasserby.lib.SimpleDownloader
